@@ -4,7 +4,6 @@ import { Plus, Search, Settings, ArrowDownLeft, ArrowUpRight } from "lucide-reac
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Logo } from "@/components/Logo";
 import { AddPartyDialog } from "@/components/AddPartyDialog";
 import { useParties, useProfile, balanceText, type PartyKind } from "@/lib/ledger";
 import { useAuth } from "@/lib/auth";
@@ -128,7 +127,6 @@ function Dashboard() {
         </Button>
       </div>
       <AddPartyDialog open={adding} onOpenChange={setAdding} kind={tab} />
-      <div className="hidden"><Logo size="sm" /></div>
     </div>
   );
 }
