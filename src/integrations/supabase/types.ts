@@ -14,7 +14,110 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      entries: {
+        Row: {
+          amount: number
+          created_at: string
+          direction: string
+          entry_date: string
+          id: string
+          note: string | null
+          party_id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          direction: string
+          entry_date?: string
+          id?: string
+          note?: string | null
+          party_id: string
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          direction?: string
+          entry_date?: string
+          id?: string
+          note?: string | null
+          party_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entries_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parties: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          kind: string
+          last_activity: string
+          name: string
+          note: string | null
+          phone: string | null
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          last_activity?: string
+          name: string
+          note?: string | null
+          phone?: string | null
+          user_id?: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          last_activity?: string
+          name?: string
+          note?: string | null
+          phone?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          business_name: string | null
+          created_at: string
+          id: string
+          owner_name: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_name?: string | null
+          created_at?: string
+          id: string
+          owner_name?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string | null
+          created_at?: string
+          id?: string
+          owner_name?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
