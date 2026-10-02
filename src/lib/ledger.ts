@@ -106,7 +106,7 @@ export function balanceText(b: number) {
 }
 
 export function receiptMessage(opts: {
-  business?: string | null;
+  business?: string | null | undefined;
   party: Party;
   entry?: { direction: "gave" | "got"; amount: number; note?: string | null; entry_date: string };
   balance: number;

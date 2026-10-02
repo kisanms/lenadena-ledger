@@ -25,7 +25,7 @@ export function PinPad({
 }: {
   onDigit: (d: string) => void;
   onDelete: () => void;
-  onBio?: () => void;
+  onBio?: (() => void) | undefined;
 }) {
   const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
   const btn = "h-16 rounded-2xl text-2xl font-semibold bg-card active:bg-secondary transition-colors";

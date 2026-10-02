@@ -44,7 +44,7 @@ export function AddPartyDialog({
   };
 
   const save = async () => {
-    if (!name.trim()) return toast.error("Enter a name");
+    if (!name.trim()) return void toast.error("Enter a name");
     setSaving(true);
     const { data, error } = await supabase
       .from("parties")
@@ -52,7 +52,7 @@ export function AddPartyDialog({
       .select()
       .single();
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["parties"] });
     setName("");
     setPhone("");

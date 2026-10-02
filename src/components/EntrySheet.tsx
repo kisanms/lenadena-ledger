@@ -48,7 +48,7 @@ export function EntrySheet({
   const canSettle = (isGot && party.balance > 0) || (!isGot && party.balance < 0);
 
   const save = async () => {
-    if (amt <= 0) return toast.error("Enter an amount");
+    if (amt <= 0) return void toast.error("Enter an amount");
     setSaving(true);
     const isToday = date === today();
     const entry_date = isToday ? new Date().toISOString() : new Date(date + "T12:00:00").toISOString();
@@ -58,7 +58,7 @@ export function EntrySheet({
       .select()
       .single();
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["entries", party.id] });
     qc.invalidateQueries({ queryKey: ["party", party.id] });
     qc.invalidateQueries({ queryKey: ["parties"] });

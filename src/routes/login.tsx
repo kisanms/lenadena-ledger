@@ -33,14 +33,14 @@ function Login() {
   };
 
   const sendCode = async () => {
-    if (!/\S+@\S+\.\S+/.test(email)) return toast.error("Enter a valid email");
+    if (!/\S+@\S+\.\S+/.test(email)) return void toast.error("Enter a valid email");
     setBusy(true);
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: { shouldCreateUser: true, emailRedirectTo: window.location.origin },
     });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     setSent(true);
     toast.success("Code sent to your email");
   };

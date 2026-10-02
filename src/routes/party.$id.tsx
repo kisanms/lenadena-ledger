@@ -66,12 +66,12 @@ function PartyPage() {
     if (!del) return;
     if (del === "party") {
       const { error } = await supabase.from("parties").delete().eq("id", party.id);
-      if (error) return toast.error(error.message);
+      if (error) return void toast.error(error.message);
       qc.invalidateQueries({ queryKey: ["parties"] });
       navigate({ to: "/" });
     } else {
       const { error } = await supabase.from("entries").delete().eq("id", del.id);
-      if (error) return toast.error(error.message);
+      if (error) return void toast.error(error.message);
       qc.invalidateQueries({ queryKey: ["entries", party.id] });
       qc.invalidateQueries({ queryKey: ["party", party.id] });
       qc.invalidateQueries({ queryKey: ["parties"] });

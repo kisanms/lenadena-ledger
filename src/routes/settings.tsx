@@ -58,7 +58,7 @@ function SettingsPage() {
     const { error } = await supabase
       .from("profiles")
       .upsert({ id: uid, business_name: biz.trim() || null, owner_name: owner.trim() || null, phone: phone.trim() || null });
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["profile", uid] });
     toast.success("Profile saved");
   };
