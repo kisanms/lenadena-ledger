@@ -33,17 +33,17 @@ function Welcome() {
     navigate({ to: "/login" });
   };
   return (
-    <div className="min-h-screen flex flex-col px-6 py-10 max-w-md mx-auto">
+    <div className="min-h-dvh flex flex-col px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] max-w-md mx-auto">
       <div className="flex justify-between items-center">
         <Logo size="sm" />
         <button className="text-sm text-muted-foreground" onClick={finish}>Skip</button>
       </div>
-      <div className="flex-1 flex flex-col items-center justify-center text-center gap-6">
-        <div className="grid place-items-center h-40 w-40 rounded-[2.5rem] bg-secondary">
-          <S.icon className="h-20 w-20 text-primary" strokeWidth={1.5} />
+      <div className="flex-1 flex flex-col items-center justify-center text-center gap-5 py-6">
+        <div className="grid place-items-center h-32 w-32 sm:h-40 sm:w-40 rounded-[2rem] shrink-0 bg-secondary">
+          <S.icon className="h-16 w-16 text-primary" strokeWidth={1.5} />
         </div>
-        <h1 className="text-4xl font-extrabold tracking-tight">{S.title}</h1>
-        <p className="text-muted-foreground text-lg">{S.body}</p>
+        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">{S.title}</h1>
+        <p className="text-muted-foreground text-base sm:text-lg">{S.body}</p>
       </div>
       <div className="flex justify-center gap-2 mb-6">
         {slides.map((_, k) => (

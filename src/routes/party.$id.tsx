@@ -81,7 +81,7 @@ function PartyPage() {
   };
 
   return (
-    <div className="min-h-screen max-w-md mx-auto pb-32">
+    <div className="min-h-dvh max-w-md mx-auto pb-32">
       <header className="bg-primary text-primary-foreground px-4 pt-5 pb-6 rounded-b-[2rem]">
         <div className="flex items-center gap-3">
           <Link to="/" className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Back">
@@ -154,7 +154,7 @@ function PartyPage() {
       </ul>
 
       <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t">
-        <div className="max-w-md mx-auto grid grid-cols-2 gap-3 p-4">
+        <div className="max-w-md mx-auto grid grid-cols-2 gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <Button className="h-14 text-base bg-loss hover:bg-loss/90 text-loss-foreground" onClick={() => setDir("gave")}>
             {l.gave} ₹
           </Button>
