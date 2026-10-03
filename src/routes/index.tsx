@@ -42,7 +42,7 @@ function Dashboard() {
   const toGive = scoped.filter((p) => p.balance < 0).reduce((s, p) => s - p.balance, 0);
 
   return (
-    <div className="min-h-screen max-w-md mx-auto pb-28">
+    <div className="min-h-dvh max-w-md mx-auto pb-28">
       <header className="bg-primary text-primary-foreground px-5 pt-6 pb-20 rounded-b-[2rem]">
         <div className="flex items-center justify-between">
           <div>
@@ -121,7 +121,7 @@ function Dashboard() {
         ))}
       </ul>
 
-      <div className="fixed bottom-6 inset-x-0 flex justify-center pointer-events-none">
+      <div className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] inset-x-0 flex justify-center pointer-events-none">
         <Button className="pointer-events-auto h-14 px-6 rounded-full shadow-xl bg-accent text-accent-foreground hover:bg-accent/90 text-base" onClick={() => setAdding(true)}>
           <Plus className="mr-1 h-5 w-5" /> Add {tab === "customer" ? "Customer" : "Supplier"}
         </Button>

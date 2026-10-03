@@ -56,7 +56,7 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col px-6 py-10 max-w-md mx-auto">
+    <div className="min-h-dvh flex flex-col px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] max-w-md mx-auto">
       <div className="flex-1 flex flex-col justify-center gap-8">
         <div className="space-y-3">
           <Logo />

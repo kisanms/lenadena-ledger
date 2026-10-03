@@ -76,7 +76,7 @@ function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen max-w-md mx-auto pb-10">
+    <div className="min-h-dvh max-w-md mx-auto pb-10">
       <header className="flex items-center gap-3 px-4 py-5">
         <Link to="/" className="grid place-items-center h-10 w-10 rounded-full bg-secondary" aria-label="Back">
           <ArrowLeft className="h-5 w-5" />
