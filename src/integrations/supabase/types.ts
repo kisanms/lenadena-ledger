@@ -58,34 +58,43 @@ export type Database = {
       parties: {
         Row: {
           balance: number
+          counterparty_id: string | null
           created_at: string
+          email: string | null
           id: string
           kind: string
           last_activity: string
           name: string
           note: string | null
+          owner_label: string | null
           phone: string | null
           user_id: string
         }
         Insert: {
           balance?: number
+          counterparty_id?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           kind?: string
           last_activity?: string
           name: string
           note?: string | null
+          owner_label?: string | null
           phone?: string | null
           user_id?: string
         }
         Update: {
           balance?: number
+          counterparty_id?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           kind?: string
           last_activity?: string
           name?: string
           note?: string | null
+          owner_label?: string | null
           phone?: string | null
           user_id?: string
         }
@@ -95,25 +104,31 @@ export type Database = {
         Row: {
           business_name: string | null
           created_at: string
+          email: string | null
           id: string
           owner_name: string | null
           phone: string | null
+          phone_norm: string | null
           updated_at: string
         }
         Insert: {
           business_name?: string | null
           created_at?: string
+          email?: string | null
           id: string
           owner_name?: string | null
           phone?: string | null
+          phone_norm?: string | null
           updated_at?: string
         }
         Update: {
           business_name?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           owner_name?: string | null
           phone?: string | null
+          phone_norm?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -123,7 +138,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      norm_phone: { Args: { p: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
