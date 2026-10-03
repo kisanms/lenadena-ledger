@@ -93,7 +93,8 @@ function Login() {
         ) : (
           <div className="space-y-5">
             <p>
-              Enter the 6-digit code sent to <b>{email}</b>
+              We sent an email to <b>{email}</b>. Enter the 6-digit code from it, or open the email on this
+              phone and tap the button inside.
             </p>
             <InputOTP
               maxLength={6}
