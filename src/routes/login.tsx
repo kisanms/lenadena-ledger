@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
-import { phoneTaken, signInWithPhone } from "@/lib/auth.functions";
+import { phoneTaken, resetWithRecoveryPin, setRecoveryPin, signInWithPhone } from "@/lib/auth.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/login")({
@@ -26,14 +26,17 @@ const isEmail = (s: string) => /^\S+@\S+\.\S+$/.test(s);
 const isPhone = (s: string) => s.replace(/\D/g, "").length >= 10;
 
 function Login() {
-  const [mode, setMode] = useState<"in" | "up">("in");
+  const [mode, setMode] = useState<"in" | "up" | "forgot">("in");
   const [id, setId] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
+  const [rpin, setRpin] = useState("");
   const [busy, setBusy] = useState(false);
+  const resetPw = useServerFn(resetWithRecoveryPin);
+  const saveRpin = useServerFn(setRecoveryPin);
   const phoneLogin = useServerFn(signInWithPhone);
   const checkPhone = useServerFn(phoneTaken);
 
@@ -61,6 +64,7 @@ function Login() {
     if (!isEmail(email)) return void toast.error("Enter a valid email");
     if (pw.length < 6) return void toast.error("Password must be at least 6 characters");
     if (pw !== pw2) return void toast.error("Passwords don't match");
+    if (!/^\d{4}$/.test(rpin)) return void toast.error("Set a 4-digit recovery PIN");
     setBusy(true);
     try {
       const { taken } = await checkPhone({ data: { phone } });
@@ -74,12 +78,41 @@ function Login() {
         },
       });
       if (error) return void toast.error(error.message);
+      if (data.session) {
+        const r = await saveRpin({ data: { pin: rpin } }).catch(() => ({ ok: false as const }));
+        if (!r.ok) toast.error("Couldn't save recovery PIN — set it in Settings");
+      }
       if (!data.session) toast.success("Account created. Please sign in.");
       else toast.success("Welcome to LenaDena!");
     } finally {
       setBusy(false);
     }
   };
+
+  const reset = async () => {
+    const v = id.trim();
+    if (!isEmail(v) && !isPhone(v)) return void toast.error("Enter your mobile number or email");
+    if (!/^\d{4}$/.test(rpin)) return void toast.error("Enter your 4-digit recovery PIN");
+    if (pw.length < 6) return void toast.error("New password must be at least 6 characters");
+    if (pw !== pw2) return void toast.error("Passwords don't match");
+    setBusy(true);
+    try {
+      const r = await resetPw({ data: { id: v, pin: rpin, password: pw } });
+      if (!r.ok) return void toast.error(r.error);
+      toast.success("Password changed!");
+      const { error } = await supabase.auth.signInWithPassword({ email: r.email, password: pw });
+      if (error) { setMode("in"); setPw2(""); setRpin(""); }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const pinInput = (label: string) => (
+    <Field label={label}>
+      <Input className="h-12 text-base tracking-[0.5em]" type="password" inputMode="numeric" maxLength={4} value={rpin}
+        onChange={(e) => setRpin(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="••••" autoComplete="off" />
+    </Field>
+  );
 
   return (
     <div className="min-h-dvh flex flex-col px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] max-w-md mx-auto">
@@ -95,7 +128,7 @@ function Login() {
             <button
               key={m}
               onClick={() => setMode(m)}
-              className={cn("h-10 rounded-lg text-sm font-semibold", mode === m ? "bg-card shadow" : "text-muted-foreground")}
+              className={cn("h-10 rounded-lg text-sm font-semibold", (mode === m || (m === "in" && mode === "forgot")) ? "bg-card shadow" : "text-muted-foreground")}
             >
               {m === "in" ? "Sign in" : "Create account"}
             </button>
@@ -106,10 +139,13 @@ function Login() {
           className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
-            void (mode === "in" ? signIn() : signUp());
+            void (mode === "in" ? signIn() : mode === "up" ? signUp() : reset());
           }}
         >
-          {mode === "in" ? (
+          {mode === "forgot" && (
+            <p className="text-sm text-muted-foreground">Enter your mobile or email and the 4-digit recovery PIN you set, then choose a new password.</p>
+          )}
+          {mode !== "up" ? (
             <Field label="Mobile number or email">
               <Input className="h-12 text-base" value={id} onChange={(e) => setId(e.target.value)} placeholder="98765 43210 or you@shop.com" autoComplete="username" />
             </Field>
@@ -126,17 +162,32 @@ function Login() {
               </Field>
             </>
           )}
-          <Field label="Password">
+          {mode === "forgot" && pinInput("4-digit recovery PIN")}
+          <Field label={mode === "forgot" ? "New password" : "Password"}>
             <Input className="h-12 text-base" type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete={mode === "in" ? "current-password" : "new-password"} />
           </Field>
-          {mode === "up" && (
-            <Field label="Confirm password">
+          {mode !== "in" && (
+            <Field label={mode === "forgot" ? "Confirm new password" : "Confirm password"}>
               <Input className="h-12 text-base" type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} autoComplete="new-password" />
             </Field>
           )}
+          {mode === "up" && (
+            <>
+              {pinInput("4-digit recovery PIN")}
+              <p className="-mt-2 text-xs text-muted-foreground">Remember this PIN — you'll need it if you forget your password.</p>
+            </>
+          )}
+          {mode === "in" && (
+            <button type="button" className="text-sm text-primary font-medium" onClick={() => { setMode("forgot"); setPw(""); setPw2(""); setRpin(""); }}>
+              Forgot password?
+            </button>
+          )}
           <Button type="submit" className="w-full h-14 text-base" disabled={busy}>
-            {busy ? "Please wait…" : mode === "in" ? "Sign in" : "Create account"}
+            {busy ? "Please wait…" : mode === "in" ? "Sign in" : mode === "up" ? "Create account" : "Reset password"}
           </Button>
+          {mode === "forgot" && (
+            <button type="button" className="w-full text-sm text-muted-foreground" onClick={() => setMode("in")}>Back to sign in</button>
+          )}
         </form>
       </div>
     </div>
