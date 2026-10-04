@@ -97,9 +97,9 @@ function PartyPage() {
               <Phone className="h-5 w-5" />
             </a>
           )}
-          <button onClick={() => setDel("party")} className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Delete party">
+          {!party.shared && <button onClick={() => setDel("party")} className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Delete party">
             <Trash2 className="h-5 w-5" />
-          </button>
+          </button>}
         </div>
         <div className="mt-5 rounded-2xl bg-card text-card-foreground p-4 flex items-center justify-between">
           <div>
@@ -130,7 +130,7 @@ function PartyPage() {
           <li key={e.id}>
             <button
               onClick={() => setShare(receiptMessage({ business, party, entry: e, balance: e.running }))}
-              onContextMenu={(ev) => { ev.preventDefault(); setDel(e); }}
+              onContextMenu={(ev) => { ev.preventDefault(); if (!party.shared) setDel(e); }}
               className="w-full flex items-center rounded-xl bg-card border px-3 py-3 text-left"
             >
               <div className="flex-1 min-w-0">
@@ -140,20 +140,24 @@ function PartyPage() {
               </div>
               <span className="w-20 text-right font-semibold text-loss">{e.direction === "gave" ? inr(e.amount) : ""}</span>
               <span className="w-20 text-right font-semibold text-gain">{e.direction === "got" ? inr(e.amount) : ""}</span>
-              <span
+              {!party.shared && <span
                 role="button"
                 aria-label="Delete entry"
                 className="ml-2 p-1 text-muted-foreground"
                 onClick={(ev) => { ev.stopPropagation(); setDel(e); }}
               >
                 <Trash2 className="h-4 w-4" />
-              </span>
+              </span>}
             </button>
           </li>
         ))}
       </ul>
 
-      <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t">
+      {party.shared ? (
+        <p className="fixed bottom-0 inset-x-0 bg-secondary text-center text-sm text-muted-foreground p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          Shared by {party.name} · updates live
+        </p>
+      ) : <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t">
         <div className="max-w-md mx-auto grid grid-cols-2 gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <Button className="h-14 text-base bg-loss hover:bg-loss/90 text-loss-foreground" onClick={() => setDir("gave")}>
             {l.gave} ₹
@@ -162,7 +166,7 @@ function PartyPage() {
             {l.got} ₹
           </Button>
         </div>
-      </div>
+      </div>}
 
       <EntrySheet
         open={!!dir}
