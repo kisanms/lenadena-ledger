@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { PartyKind } from "@/lib/ledger";
 
 type ContactsNav = Navigator & {
-  contacts?: { select: (p: string[], o?: { multiple?: boolean }) => Promise<{ name?: string[]; tel?: string[] }[]> };
+  contacts?: { select: (p: string[], o?: { multiple?: boolean }) => Promise<{ name?: string[]; tel?: string[]; email?: string[] }[]> };
 };
 
 export function AddPartyDialog({
@@ -25,6 +25,7 @@ export function AddPartyDialog({
 }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -32,11 +33,12 @@ export function AddPartyDialog({
 
   const pick = async () => {
     try {
-      const res = await (navigator as ContactsNav).contacts!.select(["name", "tel"], { multiple: false });
+      const res = await (navigator as ContactsNav).contacts!.select(["name", "tel", "email"], { multiple: false });
       const c = res[0];
       if (c) {
         setName(c.name?.[0] ?? "");
         setPhone(c.tel?.[0]?.replace(/[^\d+]/g, "") ?? "");
+        setEmail(c.email?.[0] ?? "");
       }
     } catch {
       toast.error("Couldn't open contacts");
@@ -48,7 +50,7 @@ export function AddPartyDialog({
     setSaving(true);
     const { data, error } = await supabase
       .from("parties")
-      .insert({ name: name.trim(), phone: phone.trim() || null, kind })
+      .insert({ name: name.trim(), phone: phone.trim() || null, email: email.trim() || null, kind })
       .select()
       .single();
     setSaving(false);
@@ -56,6 +58,7 @@ export function AddPartyDialog({
     qc.invalidateQueries({ queryKey: ["parties"] });
     setName("");
     setPhone("");
+    setEmail("");
     onOpenChange(false);
     navigate({ to: "/party/$id", params: { id: data.id } });
   };
@@ -83,6 +86,11 @@ export function AddPartyDialog({
               <Label htmlFor="pphone">WhatsApp / Mobile number</Label>
               <Input id="pphone" className="h-12" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="pemail">Email (optional)</Label>
+              <Input id="pemail" className="h-12" type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@email.com" />
+            </div>
+            <p className="text-xs text-muted-foreground">If they use LenaDena with this mobile or email, they'll see this khata live.</p>
             <Button className="w-full h-12 text-base" onClick={save} disabled={saving}>
               {saving ? "Saving…" : "Save"}
             </Button>

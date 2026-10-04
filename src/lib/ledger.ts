@@ -11,6 +11,10 @@ export type Party = {
   note: string | null;
   balance: number;
   last_activity: string;
+  email?: string | null;
+  user_id?: string;
+  /** True when another user created this ledger and shared it with me (read-only, mirrored). */
+  shared?: boolean;
 };
 export type Entry = {
   id: string;
@@ -21,6 +25,25 @@ export type Entry = {
   entry_date: string;
 };
 
+async function myId() {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user.id;
+}
+
+type PartyRow = Omit<Party, "balance" | "kind"> & { balance: number | string; kind: string; owner_label?: string | null };
+/** Mirrors a ledger shared by the other side: flips balance and kind, shows the owner's name. */
+function view(p: PartyRow, me?: string): Party {
+  const shared = !!me && p.user_id !== me;
+  const b = Number(p.balance);
+  return {
+    ...p,
+    shared,
+    balance: shared ? -b : b,
+    kind: (shared ? (p.kind === "customer" ? "supplier" : "customer") : p.kind) as PartyKind,
+    name: shared ? p.owner_label || p.name : p.name,
+  };
+}
+
 export function useParties() {
   return useQuery({
     queryKey: ["parties"],
@@ -30,7 +53,8 @@ export function useParties() {
         .select("*")
         .order("last_activity", { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((p) => ({ ...p, balance: Number(p.balance) })) as Party[];
+      const me = await myId();
+      return (data ?? []).map((p) => view(p as PartyRow, me));
     },
   });
 }
@@ -41,7 +65,7 @@ export function useParty(id: string) {
     queryFn: async () => {
       const { data, error } = await supabase.from("parties").select("*").eq("id", id).maybeSingle();
       if (error) throw error;
-      return data ? ({ ...data, balance: Number(data.balance) } as Party) : null;
+      return data ? view(data as PartyRow, await myId()) : null;
     },
   });
 }
@@ -57,7 +81,12 @@ export function useEntries(partyId: string) {
         .order("entry_date", { ascending: true })
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return (data ?? []).map((e) => ({ ...e, amount: Number(e.amount) })) as Entry[];
+      const me = await myId();
+      return (data ?? []).map((e) => ({
+        ...e,
+        amount: Number(e.amount),
+        direction: e.user_id !== me ? (e.direction === "gave" ? "got" : "gave") : e.direction,
+      })) as Entry[];
     },
   });
 }

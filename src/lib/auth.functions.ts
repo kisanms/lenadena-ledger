@@ -16,7 +16,16 @@ export const signInWithPhone = createServerFn({ method: "POST" })
     const fail = { ok: false as const, error: "Wrong mobile number or password" };
     const { data: prof } = await supabaseAdmin.from("profiles").select("email").eq("phone_norm", normPhone(data.phone)).maybeSingle();
     if (!prof?.email) return fail;
-    const anon = createClient(process.env["SUPABASE_URL"]!, process.env["SUPABASE_PUBLISHABLE_KEY"]!, {
+    const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
+    const anon = createClient(process.env["SUPABASE_URL"]!, key, {
+      global: {
+        fetch: (input, init) => {
+          const h = new Headers(init?.headers);
+          if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
+          h.set("apikey", key);
+          return fetch(input, { ...init, headers: h });
+        },
+      },
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const { data: s, error } = await anon.auth.signInWithPassword({ email: prof.email, password: data.password });
