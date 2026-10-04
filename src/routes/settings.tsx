@@ -11,6 +11,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { PinDots, PinPad } from "@/components/PinPad";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { RecoveryPinRow } from "@/components/RecoveryPinRow";
 import { useProfile } from "@/lib/ledger";
 import {
   biometricSupported, clearLock, disableBiometric, hasBiometric, hasPin, registerBiometric, setPin,
@@ -116,6 +117,8 @@ function SettingsPage() {
           <Switch checked={bioOn} disabled={!bioOk || !pinOn} onCheckedChange={toggleBio} />
         </div>
       </section>
+
+      <RecoveryPinRow />
 
       <section className="mx-4 mt-4 rounded-2xl bg-card border p-4">
         <p className="text-xs text-muted-foreground">Signed in as</p>
