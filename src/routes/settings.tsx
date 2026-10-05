@@ -12,6 +12,7 @@ import { PinDots, PinPad } from "@/components/PinPad";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { RecoveryPinRow } from "@/components/RecoveryPinRow";
+import { InstallBanner } from "@/components/InstallBanner";
 import { useProfile } from "@/lib/ledger";
 import {
   biometricSupported, clearLock, disableBiometric, hasBiometric, hasPin, registerBiometric, setPin,
@@ -119,6 +120,8 @@ function SettingsPage() {
       </section>
 
       <RecoveryPinRow />
+
+      <div className="mx-4 mt-4"><InstallBanner always /></div>
 
       <section className="mx-4 mt-4 rounded-2xl bg-card border p-4">
         <p className="text-xs text-muted-foreground">Signed in as</p>

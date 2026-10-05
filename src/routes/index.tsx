@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddPartyDialog } from "@/components/AddPartyDialog";
+import { InstallBanner } from "@/components/InstallBanner";
 import { useParties, useProfile, balanceText, type PartyKind } from "@/lib/ledger";
 import { useAuth } from "@/lib/auth";
 import { inr, initials, fmtDate } from "@/lib/format";
@@ -79,6 +80,9 @@ function Dashboard() {
           <p className="text-xl font-bold text-loss mt-1">{inr(toGive)}</p>
         </div>
       </div>
+
+      <div className="mx-4 mt-4 empty:hidden"><InstallBanner /></div>
+
 
       <div className="px-4 mt-5">
         <div className="relative">

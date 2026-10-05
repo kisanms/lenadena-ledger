@@ -15,6 +15,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
 import { AppGate } from "@/components/AppGate";
 import { Toaster } from "@/components/ui/sonner";
+import { initPwa } from "@/lib/pwa";
 
 function NotFoundComponent() {
   return (
@@ -112,6 +113,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => { initPwa(); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
