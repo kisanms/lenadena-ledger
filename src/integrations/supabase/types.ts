@@ -133,12 +133,41 @@ export type Database = {
         }
         Relationships: []
       }
+      recovery_pins: {
+        Row: {
+          fails: number
+          locked_until: string | null
+          pin_hash: string
+          user_id: string
+        }
+        Insert: {
+          fails?: number
+          locked_until?: string | null
+          pin_hash: string
+          user_id: string
+        }
+        Update: {
+          fails?: number
+          locked_until?: string | null
+          pin_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      has_recovery_pin: { Args: never; Returns: boolean }
+      login_email_for_phone: { Args: { _phone: string }; Returns: string }
       norm_phone: { Args: { p: string }; Returns: string }
+      phone_taken: { Args: { _phone: string }; Returns: boolean }
+      reset_password_with_pin: {
+        Args: { _id: string; _password: string; _pin: string }
+        Returns: Json
+      }
+      set_recovery_pin: { Args: { _pin: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
