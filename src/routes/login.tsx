@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
-import { phoneTaken, resetWithRecoveryPin, setRecoveryPin, signInWithPhone } from "@/lib/auth.functions";
+import { phoneTaken, resetWithRecoveryPin, setRecoveryPin, signInWithPhone } from "@/lib/auth-rpc";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/login")({
@@ -35,10 +34,6 @@ function Login() {
   const [pw2, setPw2] = useState("");
   const [rpin, setRpin] = useState("");
   const [busy, setBusy] = useState(false);
-  const resetPw = useServerFn(resetWithRecoveryPin);
-  const saveRpin = useServerFn(setRecoveryPin);
-  const phoneLogin = useServerFn(signInWithPhone);
-  const checkPhone = useServerFn(phoneTaken);
 
   const signIn = async () => {
     const v = id.trim();
@@ -49,9 +44,8 @@ function Login() {
         const { error } = await supabase.auth.signInWithPassword({ email: v.toLowerCase(), password: pw });
         if (error) toast.error("Wrong email or password");
       } else if (isPhone(v)) {
-        const r = await phoneLogin({ data: { phone: v, password: pw } });
+        const r = await signInWithPhone(v, pw);
         if (!r.ok) toast.error(r.error);
-        else await supabase.auth.setSession({ access_token: r.access_token, refresh_token: r.refresh_token });
       } else toast.error("Enter a valid mobile number or email");
     } finally {
       setBusy(false);
@@ -67,7 +61,7 @@ function Login() {
     if (!/^\d{4}$/.test(rpin)) return void toast.error("Set a 4-digit recovery PIN");
     setBusy(true);
     try {
-      const { taken } = await checkPhone({ data: { phone } });
+      const taken = await phoneTaken(phone);
       if (taken) return void toast.error("This mobile number is already registered");
       const { data, error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
@@ -79,7 +73,7 @@ function Login() {
       });
       if (error) return void toast.error(error.message);
       if (data.session) {
-        const r = await saveRpin({ data: { pin: rpin } }).catch(() => ({ ok: false as const }));
+        const r = await setRecoveryPin(rpin).catch(() => ({ ok: false as const }));
         if (!r.ok) toast.error("Couldn't save recovery PIN — set it in Settings");
       }
       if (!data.session) toast.success("Account created. Please sign in.");
@@ -97,7 +91,7 @@ function Login() {
     if (pw !== pw2) return void toast.error("Passwords don't match");
     setBusy(true);
     try {
-      const r = await resetPw({ data: { id: v, pin: rpin, password: pw } });
+      const r = await resetWithRecoveryPin(v, rpin, pw);
       if (!r.ok) return void toast.error(r.error);
       toast.success("Password changed!");
       const { error } = await supabase.auth.signInWithPassword({ email: r.email, password: pw });

@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { hasRecoveryPin, setRecoveryPin } from "@/lib/auth.functions";
+import { hasRecoveryPin, setRecoveryPin } from "@/lib/auth-rpc";
 
 export function RecoveryPinRow() {
-  const check = useServerFn(hasRecoveryPin);
-  const save = useServerFn(setRecoveryPin);
   const [isSet, setIsSet] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
   const [a, setA] = useState("");
@@ -16,15 +13,15 @@ export function RecoveryPinRow() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    check().then((r) => setIsSet(r.set)).catch(() => setIsSet(null));
-  }, [check]);
+    hasRecoveryPin().then(setIsSet).catch(() => setIsSet(null));
+  }, []);
 
   const submit = async () => {
     if (!/^\d{4}$/.test(a)) return void toast.error("Enter 4 digits");
     if (a !== b) return void toast.error("PINs don't match");
     setBusy(true);
     try {
-      const r = await save({ data: { pin: a } });
+      const r = await setRecoveryPin(a);
       if (!r.ok) return void toast.error(r.error);
       toast.success("Recovery PIN saved");
       setIsSet(true); setOpen(false); setA(""); setB("");
