@@ -16,6 +16,7 @@ export default defineConfig({
   vite: {
     plugins: [
       VitePWA({
+        outDir: "dist/client",
         injectRegister: null, // registered manually in src/lib/pwa.ts with preview guards
         registerType: "autoUpdate",
         manifest: false, // public/manifest.webmanifest is used
