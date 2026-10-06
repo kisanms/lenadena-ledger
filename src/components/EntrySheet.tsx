@@ -63,6 +63,7 @@ export function EntrySheet({
     qc.invalidateQueries({ queryKey: ["party", party.id] });
     qc.invalidateQueries({ queryKey: ["parties"] });
     onOpenChange(false);
+    void import("@/lib/push").then((m) => m.notifyParty(party.id));
     onSaved({ ...data, amount: Number(data.amount) } as Entry, projected);
   };
 

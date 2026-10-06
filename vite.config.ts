@@ -25,6 +25,7 @@ export default defineConfig({
           globDirectory: "dist/client",
           globPatterns: ["**/*.{js,css,png,svg,ico,woff2}"],
           navigateFallback: null,
+          importScripts: ["/push-sw.js"],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true,

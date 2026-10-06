@@ -133,6 +133,24 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subs: {
+        Row: {
+          created_at: string
+          endpoint: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       recovery_pins: {
         Row: {
           fails: number
@@ -163,6 +181,7 @@ export type Database = {
       login_email_for_phone: { Args: { _phone: string }; Returns: string }
       norm_phone: { Args: { p: string }; Returns: string }
       phone_taken: { Args: { _phone: string }; Returns: boolean }
+      push_targets: { Args: { _party: string }; Returns: string[] }
       reset_password_with_pin: {
         Args: { _id: string; _password: string; _pin: string }
         Returns: Json
