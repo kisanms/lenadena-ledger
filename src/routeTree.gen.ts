@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as PartyIdRouteImport } from './routes/party.$id'
+import { Route as ApiPublicPushRouteImport } from './routes/api/public/push'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +41,11 @@ const PartyIdRoute = PartyIdRouteImport.update({
   path: '/party/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPushRoute = ApiPublicPushRouteImport.update({
+  id: '/api/public/push',
+  path: '/api/public/push',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/welcome': typeof WelcomeRoute
   '/party/$id': typeof PartyIdRoute
+  '/api/public/push': typeof ApiPublicPushRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/welcome': typeof WelcomeRoute
   '/party/$id': typeof PartyIdRoute
+  '/api/public/push': typeof ApiPublicPushRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,33 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/welcome': typeof WelcomeRoute
   '/party/$id': typeof PartyIdRoute
+  '/api/public/push': typeof ApiPublicPushRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/settings' | '/welcome' | '/party/$id'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/settings'
+    | '/welcome'
+    | '/party/$id'
+    | '/api/public/push'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/settings' | '/welcome' | '/party/$id'
-  id: '__root__' | '/' | '/login' | '/settings' | '/welcome' | '/party/$id'
+  to:
+    | '/'
+    | '/login'
+    | '/settings'
+    | '/welcome'
+    | '/party/$id'
+    | '/api/public/push'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/settings'
+    | '/welcome'
+    | '/party/$id'
+    | '/api/public/push'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +105,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   WelcomeRoute: typeof WelcomeRoute
   PartyIdRoute: typeof PartyIdRoute
+  ApiPublicPushRoute: typeof ApiPublicPushRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartyIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/push': {
+      id: '/api/public/push'
+      path: '/api/public/push'
+      fullPath: '/api/public/push'
+      preLoaderRoute: typeof ApiPublicPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   WelcomeRoute: WelcomeRoute,
   PartyIdRoute: PartyIdRoute,
+  ApiPublicPushRoute: ApiPublicPushRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

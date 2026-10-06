@@ -29,9 +29,8 @@ export function initPwa() {
     navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister()));
     return;
   }
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
-  });
+  // Register right away (not on "load") so the browser's install prompt becomes available sooner.
+  navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
 }
 
 export const canInstall = () => !!deferred;
