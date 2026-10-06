@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddPartyDialog } from "@/components/AddPartyDialog";
 import { InstallBanner } from "@/components/InstallBanner";
+import { NotificationBell } from "@/components/NotificationBell";
 import { useParties, useProfile, balanceText, type PartyKind } from "@/lib/ledger";
 import { useAuth } from "@/lib/auth";
 import { inr, initials, fmtDate } from "@/lib/format";
@@ -50,9 +51,12 @@ function Dashboard() {
             <p className="text-xs opacity-75">Namaste 🙏</p>
             <h1 className="text-2xl font-bold">{profile?.business_name || "My Business"}</h1>
           </div>
-          <Link to="/settings" className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Settings">
-            <Settings className="h-5 w-5" />
-          </Link>
+          <div className="flex gap-2">
+            <NotificationBell />
+            <Link to="/settings" className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Settings">
+              <Settings className="h-5 w-5" />
+            </Link>
+          </div>
         </div>
         <div className="mt-5 grid grid-cols-2 rounded-2xl bg-primary-foreground/10 p-1">
           {(["customer", "supplier"] as const).map((k) => (
