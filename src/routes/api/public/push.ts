@@ -25,9 +25,10 @@ export const Route = createFileRoute("/api/public/push")({
     handlers: {
       POST: async ({ request }) => {
         const token = request.headers.get("authorization")?.replace(/^Bearer /, "");
-        const d = process.env.VAPID_PRIVATE_D;
-        const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-        const anon = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const env = process.env;
+        const d = env["VAPID_PRIVATE_D"];
+        const url = env["SUPABASE_URL"] || env["VITE_SUPABASE_URL"];
+        const anon = env["SUPABASE_PUBLISHABLE_KEY"] || env["VITE_SUPABASE_PUBLISHABLE_KEY"];
         if (!token || !d || !url || !anon) return new Response("unavailable", { status: 400 });
         const { party_id } = (await request.json().catch(() => ({}))) as { party_id?: string };
         if (!party_id) return new Response("bad", { status: 400 });
