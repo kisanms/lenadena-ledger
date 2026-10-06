@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { RecoveryPinRow } from "@/components/RecoveryPinRow";
 import { InstallBanner } from "@/components/InstallBanner";
+import { PushRow } from "@/components/PushRow";
 import { useProfile } from "@/lib/ledger";
 import {
   biometricSupported, clearLock, disableBiometric, hasBiometric, hasPin, registerBiometric, setPin,
@@ -120,6 +121,7 @@ function SettingsPage() {
       </section>
 
       <RecoveryPinRow />
+      <PushRow />
 
       <div className="mx-4 mt-4"><InstallBanner always /></div>
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Download, Share, X } from "lucide-react";
+import { toast } from "sonner";
 import { canInstall, isIos, isStandalone, promptInstall, subscribeInstall } from "@/lib/pwa";
 
 const KEY = "ld_install_dismissed";
@@ -17,7 +18,7 @@ export function InstallBanner({ always = false }: { always?: boolean }) {
 
   if (!ready || hidden || isStandalone()) return null;
   const ios = isIos();
-  if (!ios && !canInstall()) return null;
+  const native = canInstall();
 
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 text-card-foreground shadow-sm">
@@ -36,7 +37,10 @@ export function InstallBanner({ always = false }: { always?: boolean }) {
       </div>
       {!ios && (
         <button
-          onClick={() => promptInstall()}
+          onClick={async () => {
+            if (native) await promptInstall();
+            else toast.info("Tap the ⋮ browser menu, then \"Install app\" or \"Add to Home screen\".", { duration: 7000 });
+          }}
           className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
         >
           Install
