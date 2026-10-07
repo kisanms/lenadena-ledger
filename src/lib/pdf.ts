@@ -4,8 +4,18 @@ type E = { amount: number; direction: "gave" | "got"; entry_date: string; note?:
 
 const rs = (n: number) => "Rs. " + Math.abs(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
-export async function downloadStatement(party: P, entries: E[], business?: string | null) {
+export type Range = { from?: string; to?: string }; // ISO dates, inclusive
+
+const dstr = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("en-IN");
+
+export async function downloadStatement(party: P, all: E[], business?: string | null, range: Range = {}) {
   const { jsPDF } = await import("jspdf");
+  const from = range.from ? range.from + "T00:00:00" : null;
+  const to = range.to ? range.to + "T23:59:59.999" : null;
+  const before = from ? all.filter((e) => e.entry_date < from) : [];
+  const entries = all.filter((e) => (!from || e.entry_date >= from) && (!to || e.entry_date <= to));
+  const opening = before.reduce((s, e) => s + (e.direction === "gave" ? e.amount : -e.amount), 0);
+
   const doc = new jsPDF();
   const W = doc.internal.pageSize.getWidth();
   doc.setFillColor(31, 77, 61);
@@ -21,6 +31,13 @@ export async function downloadStatement(party: P, entries: E[], business?: strin
   doc.text(`${party.name}${party.phone ? "  ·  " + party.phone : ""}`, 14, 38);
   doc.setFontSize(10);
   doc.text(`Type: ${party.kind}`, 14, 44);
+  doc.text(
+    range.from || range.to
+      ? `Period: ${range.from ? dstr(range.from) : "Start"} to ${range.to ? dstr(range.to) : "Today"}`
+      : "Period: All time",
+    14,
+    50,
+  );
 
   let y = 56;
   const head = () => {
