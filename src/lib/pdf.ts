@@ -4,7 +4,7 @@ type E = { amount: number; direction: "gave" | "got"; entry_date: string; note?:
 
 const rs = (n: number) => "Rs. " + Math.abs(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
-export type Range = { from?: string; to?: string }; // ISO dates, inclusive
+export type Range = { from?: string | undefined; to?: string | undefined }; // ISO dates, inclusive
 
 const dstr = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("en-IN");
 

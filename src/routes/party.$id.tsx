@@ -32,6 +32,13 @@ export const Route = createFileRoute("/party/$id")({
   component: PartyPage,
 });
 
+const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const monthRange = (offset: number): Range => {
+  const now = new Date();
+  return { from: iso(new Date(now.getFullYear(), now.getMonth() + offset, 1)), to: iso(new Date(now.getFullYear(), now.getMonth() + offset + 1, 0)) };
+};
+
 function PartyPage() {
   const { id } = Route.useParams();
   const { session } = useAuth();
