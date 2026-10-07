@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AddPartyDialog } from "@/components/AddPartyDialog";
 import { InstallBanner } from "@/components/InstallBanner";
 import { NotificationBell } from "@/components/NotificationBell";
+import { NotifyPrompt } from "@/components/NotifyPrompt";
 import { useParties, useProfile, balanceText, type PartyKind } from "@/lib/ledger";
 import { useAuth } from "@/lib/auth";
 import { inr, initials, fmtDate } from "@/lib/format";
@@ -86,6 +87,7 @@ function Dashboard() {
       </div>
 
       <div className="mx-4 mt-4 empty:hidden"><InstallBanner /></div>
+      <div className="mx-4 mt-3 empty:hidden"><NotifyPrompt /></div>
 
 
       <div className="px-4 mt-5">

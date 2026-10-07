@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, MessageCircle, Phone, Share2, Trash2 } from "lucide-react";
+import { ArrowLeft, FileDown, MessageCircle, Phone, Share2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth";
 import { balanceText, labels, receiptMessage, useEntries, useParty, useProfile, type Entry } from "@/lib/ledger";
 import { fmtDate, fmtTime, inr, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { downloadStatement } from "@/lib/pdf";
 
 export const Route = createFileRoute("/party/$id")({
   head: () => ({
@@ -111,6 +112,9 @@ function PartyPage() {
           <div className="flex gap-2">
             <Button size="icon" className="h-11 w-11 rounded-full bg-whatsapp hover:bg-whatsapp/90 text-gain-foreground" onClick={() => shareWhatsApp(party.phone, reminder)} aria-label="WhatsApp reminder">
               <MessageCircle className="h-5 w-5" />
+            </Button>
+            <Button size="icon" variant="secondary" className="h-11 w-11 rounded-full" aria-label="Download PDF" onClick={() => downloadStatement(party, entries ?? [], business).then(() => toast.success("PDF saved to Downloads"))}>
+              <FileDown className="h-5 w-5" />
             </Button>
             <Button size="icon" variant="secondary" className="h-11 w-11 rounded-full" onClick={() => shareNative(reminder)} aria-label="Share">
               <Share2 className="h-5 w-5" />
