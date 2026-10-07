@@ -115,7 +115,7 @@ function PartyPage() {
             <Button size="icon" className="h-11 w-11 rounded-full bg-whatsapp hover:bg-whatsapp/90 text-gain-foreground" onClick={() => shareWhatsApp(party.phone, reminder)} aria-label="WhatsApp reminder">
               <MessageCircle className="h-5 w-5" />
             </Button>
-            <Button size="icon" variant="secondary" className="h-11 w-11 rounded-full" aria-label="Download PDF" onClick={() => downloadStatement(party, entries ?? [], business).then(() => toast.success("PDF saved to Downloads"))}>
+            <Button size="icon" variant="secondary" className="h-11 w-11 rounded-full" aria-label="Download PDF" onClick={() => setPdfOpen(true)}>
               <FileDown className="h-5 w-5" />
             </Button>
             <Button size="icon" variant="secondary" className="h-11 w-11 rounded-full" onClick={() => shareNative(reminder)} aria-label="Share">
