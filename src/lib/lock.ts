@@ -42,7 +42,7 @@ export async function registerBiometric(email: string) {
   const cred = (await navigator.credentials.create({
     publicKey: {
       challenge: crypto.getRandomValues(new Uint8Array(32)),
-      rp: { name: "LenaDena" },
+      rp: { name: "LenaDena", id: location.hostname },
       user: { id: crypto.getRandomValues(new Uint8Array(16)), name: email, displayName: email },
       pubKeyCredParams: [
         { type: "public-key", alg: -7 },
@@ -61,7 +61,8 @@ export async function verifyBiometric() {
   const res = await navigator.credentials.get({
     publicKey: {
       challenge: crypto.getRandomValues(new Uint8Array(32)),
-      allowCredentials: [{ type: "public-key", id: unb64(id) }],
+      rpId: location.hostname,
+      allowCredentials: [{ type: "public-key", id: unb64(id), transports: ["internal"] }],
       userVerification: "required",
       timeout: 60000,
     },

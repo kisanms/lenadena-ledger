@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { PinDots, PinPad } from "./PinPad";
 import { checkPin, hasBiometric, markUnlocked, verifyBiometric } from "@/lib/lock";
@@ -22,10 +22,6 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
     }
   };
 
-  useEffect(() => {
-    if (bio) void tryBio();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const press = async (d: string) => {
     if (pin.length >= 4) return;
@@ -50,6 +46,11 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
         <p className="text-muted-foreground">Enter your 4-digit PIN</p>
       </div>
       <PinDots value={pin} error={err} />
+      {bio && (
+        <button onClick={tryBio} className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground">
+          Tap to unlock with fingerprint / face
+        </button>
+      )}
       <div className="w-full space-y-6">
         <PinPad onDigit={press} onDelete={() => setPin((p) => p.slice(0, -1))} onBio={bio ? tryBio : undefined} />
         <button className="block mx-auto text-sm text-muted-foreground underline" onClick={() => signOut()}>

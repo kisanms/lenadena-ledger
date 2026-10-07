@@ -8,9 +8,18 @@ export function PushRow() {
   const [on, setOn] = useState(false);
   const [busy, setBusy] = useState(false);
   const [ok, setOk] = useState(false);
-  useEffect(() => { setOk(pushSupported()); isPushOn().then(setOn); }, []);
+  const [blocked, setBlocked] = useState(false);
+  useEffect(() => {
+    setOk(pushSupported());
+    setBlocked(typeof Notification !== "undefined" && Notification.permission === "denied");
+    isPushOn().then(setOn);
+  }, []);
 
   const toggle = async (v: boolean) => {
+    if (v && typeof Notification !== "undefined" && Notification.permission === "denied") {
+      setBlocked(true);
+      return;
+    }
     setBusy(true);
     try {
       if (v) { await enablePush(); toast.success("Notifications on"); } else await disablePush();
@@ -21,7 +30,7 @@ export function PushRow() {
   };
 
   return (
-    <div className="mx-4 mt-4 flex items-center gap-3 rounded-xl border border-border bg-card p-4">
+    <div className="mx-4 mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4">
       <Bell className="h-5 w-5 text-primary" />
       <div className="flex-1 text-sm">
         <p className="font-semibold">Notifications</p>
@@ -30,6 +39,11 @@ export function PushRow() {
         </p>
       </div>
       <Switch checked={on} disabled={busy || !ok} onCheckedChange={toggle} />
+      {blocked && (
+        <p className="basis-full rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+          Notifications are blocked for this site. Tap the lock icon next to the address (or long-press the app icon → App info) → Permissions → Notifications → Allow, then try again.
+        </p>
+      )}
     </div>
   );
 }

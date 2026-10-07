@@ -25,3 +25,15 @@ self.addEventListener("notificationclick", (event) => {
     }),
   );
 });
+
+// Standalone worker (served from public/): activate fast, network-first navigation fallback.
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
+self.addEventListener("fetch", (event) => {
+  const r = event.request;
+  if (r.method !== "GET" || r.mode !== "navigate") return;
+  event.respondWith(
+    fetch(r).then((res) => { const c = res.clone(); caches.open("ld-pages").then((k) => k.put("/", c)); return res; })
+      .catch(() => caches.match("/").then((m) => m || Response.error())),
+  );
+});
