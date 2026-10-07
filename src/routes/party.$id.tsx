@@ -9,6 +9,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { EntrySheet } from "@/components/EntrySheet";
 import { ShareDialog, shareNative, shareWhatsApp } from "@/components/ShareDialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { balanceText, labels, receiptMessage, useEntries, useParty, useProfile, type Entry } from "@/lib/ledger";
 import { fmtDate, fmtTime, inr, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { downloadStatement } from "@/lib/pdf";
+import { downloadStatement, type Range } from "@/lib/pdf";
 
 export const Route = createFileRoute("/party/$id")({
   head: () => ({
