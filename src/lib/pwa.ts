@@ -30,7 +30,7 @@ export function initPwa() {
     return;
   }
   // Register right away (not on "load") so the browser's install prompt becomes available sooner.
-  navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
+  navigator.serviceWorker.register("/push-sw.js", { scope: "/" }).catch(() => {});
 }
 
 export const canInstall = () => !!deferred;
