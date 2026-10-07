@@ -199,6 +199,28 @@ function PartyPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={pdfOpen} onOpenChange={setPdfOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Download statement</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              ["All time", {}],
+              ["This month", monthRange(0)],
+              ["Last month", monthRange(-1)],
+              ["Last 30 days", { from: iso(addDays(new Date(), -29)), to: iso(new Date()) }],
+            ] as [string, Range][]).map(([label, r]) => (
+              <Button key={label} variant="outline" onClick={() => savePdf(r)}>{label}</Button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <Input type="date" value={range.from ?? ""} onChange={(e) => setRange((r) => ({ ...r, from: e.target.value || undefined }))} aria-label="From date" />
+            <span className="text-muted-foreground text-sm">to</span>
+            <Input type="date" value={range.to ?? ""} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value || undefined }))} aria-label="To date" />
+          </div>
+          <Button className="w-full" onClick={() => savePdf(range)}>Download selected period</Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
