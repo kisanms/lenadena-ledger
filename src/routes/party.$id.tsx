@@ -9,6 +9,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { EntrySheet } from "@/components/EntrySheet";
 import { ShareDialog, shareNative, shareWhatsApp } from "@/components/ShareDialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { balanceText, labels, receiptMessage, useEntries, useParty, useProfile, type Entry } from "@/lib/ledger";
 import { fmtDate, fmtTime, inr, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { downloadStatement } from "@/lib/pdf";
+import { downloadStatement, type Range } from "@/lib/pdf";
 
 export const Route = createFileRoute("/party/$id")({
   head: () => ({
@@ -39,6 +41,8 @@ function PartyPage() {
   const [dir, setDir] = useState<"gave" | "got" | null>(null);
   const [share, setShare] = useState<string | null>(null);
   const [del, setDel] = useState<Entry | "party" | null>(null);
+  const [pdfOpen, setPdfOpen] = useState(false);
+  const [range, setRange] = useState<Range>({});
   const qc = useQueryClient();
   const navigate = useNavigate();
 
@@ -113,7 +117,7 @@ function PartyPage() {
             <Button size="icon" className="h-11 w-11 rounded-full bg-whatsapp hover:bg-whatsapp/90 text-gain-foreground" onClick={() => shareWhatsApp(party.phone, reminder)} aria-label="WhatsApp reminder">
               <MessageCircle className="h-5 w-5" />
             </Button>
-            <Button size="icon" variant="secondary" className="h-11 w-11 rounded-full" aria-label="Download PDF" onClick={() => downloadStatement(party, entries ?? [], business).then(() => toast.success("PDF saved to Downloads"))}>
+            <Button size="icon" variant="secondary" className="h-11 w-11 rounded-full" aria-label="Download PDF" onClick={() => setPdfOpen(true)}>
               <FileDown className="h-5 w-5" />
             </Button>
             <Button size="icon" variant="secondary" className="h-11 w-11 rounded-full" onClick={() => shareNative(reminder)} aria-label="Share">
@@ -195,6 +199,28 @@ function PartyPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={pdfOpen} onOpenChange={setPdfOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Download statement</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              ["All time", {}],
+              ["This month", monthRange(0)],
+              ["Last month", monthRange(-1)],
+              ["Last 30 days", { from: iso(addDays(new Date(), -29)), to: iso(new Date()) }],
+            ] as [string, Range][]).map(([label, r]) => (
+              <Button key={label} variant="outline" onClick={() => savePdf(r)}>{label}</Button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <Input type="date" value={range.from ?? ""} onChange={(e) => setRange((r) => ({ ...r, from: e.target.value || undefined }))} aria-label="From date" />
+            <span className="text-muted-foreground text-sm">to</span>
+            <Input type="date" value={range.to ?? ""} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value || undefined }))} aria-label="To date" />
+          </div>
+          <Button className="w-full" onClick={() => savePdf(range)}>Download selected period</Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
