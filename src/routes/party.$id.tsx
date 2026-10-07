@@ -41,6 +41,8 @@ function PartyPage() {
   const [dir, setDir] = useState<"gave" | "got" | null>(null);
   const [share, setShare] = useState<string | null>(null);
   const [del, setDel] = useState<Entry | "party" | null>(null);
+  const [pdfOpen, setPdfOpen] = useState(false);
+  const [range, setRange] = useState<Range>({});
   const qc = useQueryClient();
   const navigate = useNavigate();
 
