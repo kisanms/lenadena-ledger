@@ -53,6 +53,14 @@ function PartyPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate({ to: "/", replace: true });
+    }
+  };
+
   const rows = useMemo(() => {
     let run = 0;
     return (entries ?? []).map((e) => {
@@ -66,7 +74,7 @@ function PartyPage() {
     return (
       <div className="p-6 text-center">
         <p>Not found.</p>
-        <Link to="/" className="text-primary underline">Back</Link>
+        <button type="button" onClick={handleBack} className="text-primary underline">Back</button>
       </div>
     );
 
@@ -92,7 +100,7 @@ function PartyPage() {
       const { error } = await supabase.from("parties").delete().eq("id", party.id);
       if (error) return void toast.error(error.message);
       qc.invalidateQueries({ queryKey: ["parties"] });
-      navigate({ to: "/" });
+      navigate({ to: "/", replace: true });
     } else {
       const { error } = await supabase.from("entries").delete().eq("id", del.id);
       if (error) return void toast.error(error.message);
@@ -108,9 +116,14 @@ function PartyPage() {
     <div className="min-h-dvh max-w-md mx-auto pb-32">
       <header className="bg-primary text-primary-foreground px-4 pt-5 pb-6 rounded-b-[2rem]">
         <div className="flex items-center gap-3">
-          <Link to="/" className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Back">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10"
+            aria-label="Back"
+          >
             <ArrowLeft className="h-5 w-5" />
-          </Link>
+          </button>
           <span className="grid place-items-center h-10 w-10 rounded-full bg-accent text-accent-foreground font-semibold">{initials(party.name)}</span>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold truncate">{party.name}</h1>
@@ -219,7 +232,7 @@ function PartyPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-           <Dialog open={pdfOpen} onOpenChange={setPdfOpen}>
+      <Dialog open={pdfOpen} onOpenChange={setPdfOpen}>
         <DialogContent className="w-[calc(100vw-2rem)] max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto p-4 sm:p-6">
           <DialogHeader className="pr-8 text-left sm:text-center">
             <DialogTitle className="text-lg sm:text-xl">Download statement</DialogTitle>
@@ -242,7 +255,6 @@ function PartyPage() {
           <Button className="h-auto min-h-11 w-full whitespace-normal px-3 py-3 text-sm leading-snug sm:text-base" onClick={() => savePdf(range)}>Download selected period</Button>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }
