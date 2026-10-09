@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Fingerprint, KeyRound, LogOut } from "lucide-react";
 import { toast } from "sonner";
@@ -36,6 +36,15 @@ function SettingsPage() {
   const uid = session!.user.id;
   const { data: profile } = useProfile(uid);
   const qc = useQueryClient();
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate({ to: "/", replace: true });
+    }
+  };
   const [biz, setBiz] = useState("");
   const [owner, setOwner] = useState("");
   const [phone, setPhone] = useState("");
@@ -81,9 +90,14 @@ function SettingsPage() {
   return (
     <div className="min-h-dvh max-w-md mx-auto pb-10">
       <header className="flex items-center gap-3 px-4 py-5">
-        <Link to="/" className="grid place-items-center h-10 w-10 rounded-full bg-secondary" aria-label="Back">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="grid place-items-center h-10 w-10 rounded-full bg-secondary"
+          aria-label="Back"
+        >
           <ArrowLeft className="h-5 w-5" />
-        </Link>
+        </button>
         <h1 className="text-2xl font-bold">Settings</h1>
       </header>
 
