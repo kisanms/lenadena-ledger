@@ -74,6 +74,18 @@ function PartyPage() {
   const business = profile?.business_name;
   const reminder = receiptMessage({ business, party, balance: party.balance });
 
+  const savePdf = async (r: Range) => {
+    setPdfOpen(false);
+    const toastId = toast.loading("Generating PDF statement...");
+    try {
+      await downloadStatement(party, entries ?? [], business, r);
+      toast.success("Statement downloaded", { id: toastId });
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      toast.error("Failed to generate PDF", { id: toastId });
+    }
+  };
+
   const confirmDelete = async () => {
     if (!del) return;
     if (del === "party") {
