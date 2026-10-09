@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus, Search, Settings, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,15 @@ function Dashboard() {
   const [tab, setTab] = useState<PartyKind>("customer");
   const [q, setQ] = useState("");
   const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      // Attempt to close app when back is pressed from the home/main screen
+      window.close();
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   const list = useMemo(
     () =>
