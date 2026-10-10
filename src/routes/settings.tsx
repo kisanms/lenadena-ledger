@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Fingerprint, KeyRound, LogOut } from "lucide-react";
+import { ArrowLeft, KeyRound, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,15 +15,13 @@ import { RecoveryPinRow } from "@/components/RecoveryPinRow";
 import { InstallBanner } from "@/components/InstallBanner";
 import { PushRow } from "@/components/PushRow";
 import { useProfile } from "@/lib/ledger";
-import {
-  biometricSupported, clearLock, disableBiometric, hasBiometric, hasPin, registerBiometric, setPin,
-} from "@/lib/lock";
+import { clearLock, hasPin, setPin } from "@/lib/lock";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
       { title: "Settings — LenaDena" },
-      { name: "description", content: "Business profile, PIN lock and biometrics." },
+      { name: "description", content: "Business profile and PIN lock." },
       { property: "og:title", content: "Settings — LenaDena" },
       { property: "og:description", content: "Manage your LenaDena business profile and security." },
     ],
@@ -49,15 +47,12 @@ function SettingsPage() {
   const [owner, setOwner] = useState("");
   const [phone, setPhone] = useState("");
   const [pinOn, setPinOn] = useState(false);
-  const [bioOn, setBioOn] = useState(false);
-  const [bioOk, setBioOk] = useState(false);
   const [pinSheet, setPinSheet] = useState(false);
 
   useEffect(() => {
     setPinOn(hasPin());
-    setBioOn(hasBiometric());
-    void biometricSupported().then(setBioOk);
   }, []);
+
   useEffect(() => {
     if (profile) {
       setBiz(profile.business_name ?? "");
@@ -73,18 +68,6 @@ function SettingsPage() {
     if (error) return void toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["profile", uid] });
     toast.success("Profile saved");
-  };
-
-  const toggleBio = async (on: boolean) => {
-    try {
-      if (on) {
-        await registerBiometric(session!.user.email ?? "user");
-        toast.success("Biometric unlock enabled");
-      } else disableBiometric();
-      setBioOn(on);
-    } catch {
-      toast.error("Couldn't set up biometrics");
-    }
   };
 
   return (
@@ -117,21 +100,13 @@ function SettingsPage() {
             checked={pinOn}
             onCheckedChange={(on) => {
               if (on) setPinSheet(true);
-              else { clearLock(); setPinOn(false); setBioOn(false); toast.success("PIN removed"); }
+              else { clearLock(); setPinOn(false); toast.success("PIN removed"); }
             }}
           />
         </div>
         {pinOn && (
           <button className="w-full text-left p-4 text-sm text-primary font-medium" onClick={() => setPinSheet(true)}>Change PIN</button>
         )}
-        <div className="flex items-center gap-3 p-4">
-          <Fingerprint className="h-5 w-5 text-primary" />
-          <div className="flex-1">
-            <p className="font-medium">Fingerprint / Face unlock</p>
-            <p className="text-xs text-muted-foreground">{!bioOk ? "Not available on this device" : !pinOn ? "Set a PIN first" : "Faster unlock, PIN as backup"}</p>
-          </div>
-          <Switch checked={bioOn} disabled={!bioOk || !pinOn} onCheckedChange={toggleBio} />
-        </div>
       </section>
 
       <RecoveryPinRow />
