@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizePhone } from "@/lib/format";
 import type { PartyKind } from "@/lib/ledger";
 
 type ContactsNav = Navigator & {
@@ -37,7 +38,9 @@ export function AddPartyDialog({
       const c = res[0];
       if (c) {
         setName(c.name?.[0] ?? "");
-        setPhone(c.tel?.[0]?.replace(/[^\d+]/g, "") ?? "");
+        const rawTel = c.tel?.[0] ?? "";
+        // Clean +91, country codes, and non-digit characters so user sees the clean 10-digit number
+        setPhone(normalizePhone(rawTel));
         setEmail(c.email?.[0] ?? "");
       }
     } catch {
@@ -48,9 +51,10 @@ export function AddPartyDialog({
   const save = async () => {
     if (!name.trim()) return void toast.error("Enter a name");
     setSaving(true);
+    const cleanedPhone = normalizePhone(phone);
     const { data, error } = await supabase
       .from("parties")
-      .insert({ name: name.trim(), phone: phone.trim() || null, email: email.trim() || null, kind })
+      .insert({ name: name.trim(), phone: cleanedPhone || null, email: email.trim() || null, kind })
       .select()
       .single();
     setSaving(false);
@@ -84,7 +88,22 @@ export function AddPartyDialog({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="pphone">WhatsApp / Mobile number</Label>
-              <Input id="pphone" className="h-12" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" />
+              <Input
+                id="pphone"
+                className="h-12"
+                inputMode="tel"
+                value={phone}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val.startsWith("+") || val.startsWith("0") || val.includes(" ") || val.includes("-")) {
+                    setPhone(normalizePhone(val));
+                  } else {
+                    setPhone(val);
+                  }
+                }}
+                onBlur={() => setPhone(normalizePhone(phone))}
+                placeholder="98765 43210"
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="pemail">Email (optional)</Label>
