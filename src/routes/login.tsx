@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { phoneTaken, resetWithRecoveryPin, setRecoveryPin, signInWithPhone } from "@/lib/auth-rpc";
+import { normalizePhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/login")({
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/login")({
 });
 
 const isEmail = (s: string) => /^\S+@\S+\.\S+$/.test(s);
-const isPhone = (s: string) => s.replace(/\D/g, "").length >= 10;
+const isPhone = (s: string) => normalizePhone(s).length >= 10;
 
 function Login() {
   const [mode, setMode] = useState<"in" | "up" | "forgot">("in");
@@ -44,7 +45,8 @@ function Login() {
         const { error } = await supabase.auth.signInWithPassword({ email: v.toLowerCase(), password: pw });
         if (error) toast.error("Wrong email or password");
       } else if (isPhone(v)) {
-        const r = await signInWithPhone(v, pw);
+        const norm = normalizePhone(v);
+        const r = await signInWithPhone(norm, pw);
         if (!r.ok) toast.error(r.error);
       } else toast.error("Enter a valid mobile number or email");
     } finally {
@@ -53,22 +55,23 @@ function Login() {
   };
 
   const signUp = async () => {
+    const normPhone = normalizePhone(phone);
     if (!name.trim()) return void toast.error("Enter your name or shop name");
-    if (!isPhone(phone)) return void toast.error("Enter a valid 10-digit mobile number");
+    if (normPhone.length < 10) return void toast.error("Enter a valid 10-digit mobile number");
     if (!isEmail(email)) return void toast.error("Enter a valid email");
     if (pw.length < 6) return void toast.error("Password must be at least 6 characters");
     if (pw !== pw2) return void toast.error("Passwords don't match");
     if (!/^\d{4}$/.test(rpin)) return void toast.error("Set a 4-digit recovery PIN");
     setBusy(true);
     try {
-      const taken = await phoneTaken(phone);
+      const taken = await phoneTaken(normPhone);
       if (taken) return void toast.error("This mobile number is already registered");
       const { data, error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password: pw,
         options: {
           emailRedirectTo: window.location.origin,
-          data: { phone: phone.trim(), owner_name: name.trim(), business_name: name.trim() },
+          data: { phone: normPhone, owner_name: name.trim(), business_name: name.trim() },
         },
       });
       if (error) return void toast.error(error.message);
@@ -86,12 +89,13 @@ function Login() {
   const reset = async () => {
     const v = id.trim();
     if (!isEmail(v) && !isPhone(v)) return void toast.error("Enter your mobile number or email");
+    const target = isEmail(v) ? v : normalizePhone(v);
     if (!/^\d{4}$/.test(rpin)) return void toast.error("Enter your 4-digit recovery PIN");
     if (pw.length < 6) return void toast.error("New password must be at least 6 characters");
     if (pw !== pw2) return void toast.error("Passwords don't match");
     setBusy(true);
     try {
-      const r = await resetWithRecoveryPin(v, rpin, pw);
+      const r = await resetWithRecoveryPin(target, rpin, pw);
       if (!r.ok) return void toast.error(r.error);
       toast.success("Password changed!");
       const { error } = await supabase.auth.signInWithPassword({ email: r.email, password: pw });
@@ -149,7 +153,22 @@ function Login() {
                 <Input className="h-12 text-base" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ramesh Kirana Store" />
               </Field>
               <Field label="Mobile number">
-                <Input className="h-12 text-base" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" autoComplete="tel" />
+                <Input
+                  className="h-12 text-base"
+                  inputMode="tel"
+                  value={phone}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val.startsWith("+") || val.startsWith("0") || val.includes(" ") || val.includes("-")) {
+                      setPhone(normalizePhone(val));
+                    } else {
+                      setPhone(val);
+                    }
+                  }}
+                  onBlur={() => setPhone(normalizePhone(phone))}
+                  placeholder="98765 43210"
+                  autoComplete="tel"
+                />
               </Field>
               <Field label="Email">
                 <Input className="h-12 text-base" type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@shop.com" autoComplete="email" />
