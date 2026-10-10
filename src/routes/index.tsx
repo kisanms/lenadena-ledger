@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus, Search, Settings, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { NotifyPrompt } from "@/components/NotifyPrompt";
 import { useParties, useProfile, balanceText, type PartyKind } from "@/lib/ledger";
 import { useAuth } from "@/lib/auth";
-import { inr, initials, fmtDate } from "@/lib/format";
+import { inr, initials, fmtDate, formatPhone, normalizePhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -33,6 +33,9 @@ function Dashboard() {
   const [q, setQ] = useState("");
   const [adding, setAdding] = useState(false);
 
+  // Swipe gesture tracking
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+
   useEffect(() => {
     const handlePopState = () => {
       // Attempt to close app when back is pressed from the home/main screen
@@ -42,19 +45,70 @@ function Dashboard() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  const list = useMemo(
-    () =>
-      (parties ?? []).filter(
-        (p) => p.kind === tab && (p.name.toLowerCase().includes(q.toLowerCase()) || (p.phone ?? "").includes(q)),
-      ),
-    [parties, tab, q],
+  const customerCount = useMemo(
+    () => (parties ?? []).filter((p) => p.kind === "customer").length,
+    [parties]
   );
+  const supplierCount = useMemo(
+    () => (parties ?? []).filter((p) => p.kind === "supplier").length,
+    [parties]
+  );
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    touchStart.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+    };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart.current) return;
+    const touch = e.changedTouches[0];
+    if (!touch) return;
+    const diffX = touch.clientX - touchStart.current.x;
+    const diffY = touch.clientY - touchStart.current.y;
+
+    // Must be predominantly horizontal and exceed threshold (45px)
+    if (Math.abs(diffX) > 45 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
+      if (diffX < 0 && tab === "customer") {
+        // Swiped left -> go to Supplier
+        setTab("supplier");
+      } else if (diffX > 0 && tab === "supplier") {
+        // Swiped right -> go to Customer
+        setTab("customer");
+      }
+    }
+    touchStart.current = null;
+  };
+
+  const list = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    const queryNormPhone = normalizePhone(q);
+    return (parties ?? []).filter((p) => {
+      if (p.kind !== tab) return false;
+      if (!query) return true;
+      const nameMatch = p.name.toLowerCase().includes(query);
+      const rawPhoneMatch = (p.phone ?? "").includes(query);
+      const normPhoneMatch =
+        queryNormPhone.length > 0 &&
+        p.phone &&
+        normalizePhone(p.phone).includes(queryNormPhone);
+      return nameMatch || rawPhoneMatch || normPhoneMatch;
+    });
+  }, [parties, tab, q]);
+
   const scoped = (parties ?? []).filter((p) => p.kind === tab);
   const toGet = scoped.filter((p) => p.balance > 0).reduce((s, p) => s + p.balance, 0);
   const toGive = scoped.filter((p) => p.balance < 0).reduce((s, p) => s - p.balance, 0);
 
   return (
-    <div className="min-h-dvh max-w-md mx-auto pb-28">
+    <div
+      className="min-h-dvh max-w-md mx-auto pb-28 touch-pan-y"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <header className="bg-primary text-primary-foreground px-5 pt-6 pb-20 rounded-b-[2rem]">
         <div className="flex items-center justify-between">
           <div>
@@ -69,18 +123,36 @@ function Dashboard() {
           </div>
         </div>
         <div className="mt-5 grid grid-cols-2 rounded-2xl bg-primary-foreground/10 p-1">
-          {(["customer", "supplier"] as const).map((k) => (
-            <button
-              key={k}
-              onClick={() => setTab(k)}
-              className={cn(
-                "h-10 rounded-xl text-sm font-semibold transition-colors",
-                tab === k ? "bg-primary-foreground text-primary" : "opacity-80",
-              )}
-            >
-              {k === "customer" ? "Customers" : "Suppliers"}
-            </button>
-          ))}
+          {(["customer", "supplier"] as const).map((k) => {
+            const count = k === "customer" ? customerCount : supplierCount;
+            const active = tab === k;
+            return (
+              <button
+                key={k}
+                onClick={() => setTab(k)}
+                className={cn(
+                  "h-10 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2",
+                  active
+                    ? "bg-primary-foreground text-primary shadow-sm"
+                    : "opacity-80 hover:opacity-100",
+                )}
+                aria-selected={active}
+                role="tab"
+              >
+                <span>{k === "customer" ? "Customers" : "Suppliers"}</span>
+                <span
+                  className={cn(
+                    "text-xs px-2 py-0.5 rounded-full font-bold transition-colors",
+                    active
+                      ? "bg-primary/10 text-primary"
+                      : "bg-primary-foreground/20 text-primary-foreground",
+                  )}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </header>
 
@@ -97,7 +169,6 @@ function Dashboard() {
 
       <div className="mx-4 mt-4 empty:hidden"><InstallBanner /></div>
       <div className="mx-4 mt-3 empty:hidden"><NotifyPrompt /></div>
-
 
       <div className="px-4 mt-5">
         <div className="relative">
@@ -127,7 +198,9 @@ function Dashboard() {
               </span>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{p.name}</p>
-                <p className="text-xs text-muted-foreground">{fmtDate(p.last_activity)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {p.phone ? `${formatPhone(p.phone)} · ` : ""}{fmtDate(p.last_activity)}
+                </p>
               </div>
               <div className="text-right">
                 <p className={cn("font-bold", p.balance > 0 ? "text-gain" : p.balance < 0 ? "text-loss" : "text-muted-foreground")}>
