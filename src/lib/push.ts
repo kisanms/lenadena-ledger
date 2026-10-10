@@ -13,7 +13,9 @@ export const pushSupported = () =>
   typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 
 async function registration() {
-  return (await navigator.serviceWorker.getRegistration()) ?? navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  const existing = await navigator.serviceWorker.getRegistration();
+  if (existing) return existing;
+  return await navigator.serviceWorker.register("/push-sw.js", { scope: "/" });
 }
 
 export async function isPushOn() {
@@ -23,13 +25,27 @@ export async function isPushOn() {
 }
 
 export async function enablePush() {
-  if (!pushSupported()) throw new Error("This browser can't show notifications. On iPhone, install the app first.");
-  if ((await Notification.requestPermission()) !== "granted") throw new Error("Notifications were blocked");
+  if (!pushSupported()) {
+    throw new Error("This device or browser does not support notifications. On iPhone, add LenaDena to your Home Screen first.");
+  }
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") {
+    throw new Error("Notification permission denied. Please allow notifications in site permissions.");
+  }
   const reg = await registration();
-  await navigator.serviceWorker.ready;
+  
+  // Guard against serviceWorker.ready hanging forever
+  await Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Service worker registration timed out. Please refresh the page and try again.")), 5000)
+    ),
+  ]);
+
   const sub =
     (await reg.pushManager.getSubscription()) ??
     (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: toBytes(VAPID_PUBLIC) }));
+
   const { error } = await supabase.from("push_subs" as never).upsert({ endpoint: sub.endpoint } as never);
   if (error) throw error;
 }
