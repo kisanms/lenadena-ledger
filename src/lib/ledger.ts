@@ -157,5 +157,6 @@ export function receiptMessage(opts: {
   else if (balance < 0) lines.push(`Balance payable to you: *${r(balance)}*`);
   else lines.push("Your account is fully settled ✅");
   lines.push("", "_Sent via LenaDena digital khata_");
+  lines.push("", "📲 Download the app:", "https://lenadena-one-stop-solution.vercel.app/apk");
   return lines.join("\n");
 }
