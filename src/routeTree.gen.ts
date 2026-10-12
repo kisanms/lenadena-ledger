@@ -10,6 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as ApkRouteImport } from './routes/apk'
+import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as WelcomeRouteImport } from './routes/welcome'
@@ -19,6 +22,21 @@ import { Route as ApiPublicPushRouteImport } from './routes/api/public/push'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApkRoute = ApkRouteImport.update({
+  id: '/apk',
+  path: '/apk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeleteAccountRoute = DeleteAccountRouteImport.update({
+  id: '/delete-account',
+  path: '/delete-account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -49,6 +67,9 @@ const ApiPublicPushRoute = ApiPublicPushRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/apk': typeof ApkRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/welcome': typeof WelcomeRoute
@@ -57,6 +78,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/apk': typeof ApkRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/welcome': typeof WelcomeRoute
@@ -66,6 +90,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/apk': typeof ApkRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/welcome': typeof WelcomeRoute
@@ -76,6 +103,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
+    | '/apk'
+    | '/delete-account'
     | '/login'
     | '/settings'
     | '/welcome'
@@ -84,6 +114,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
+    | '/apk'
+    | '/delete-account'
     | '/login'
     | '/settings'
     | '/welcome'
@@ -92,6 +125,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/about'
+    | '/apk'
+    | '/delete-account'
     | '/login'
     | '/settings'
     | '/welcome'
@@ -101,6 +137,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  ApkRoute: typeof ApkRoute
+  DeleteAccountRoute: typeof DeleteAccountRoute
   LoginRoute: typeof LoginRoute
   SettingsRoute: typeof SettingsRoute
   WelcomeRoute: typeof WelcomeRoute
@@ -115,6 +154,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apk': {
+      id: '/apk'
+      path: '/apk'
+      fullPath: '/apk'
+      preLoaderRoute: typeof ApkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/delete-account': {
+      id: '/delete-account'
+      path: '/delete-account'
+      fullPath: '/delete-account'
+      preLoaderRoute: typeof DeleteAccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -157,6 +217,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  ApkRoute: ApkRoute,
+  DeleteAccountRoute: DeleteAccountRoute,
   LoginRoute: LoginRoute,
   SettingsRoute: SettingsRoute,
   WelcomeRoute: WelcomeRoute,
