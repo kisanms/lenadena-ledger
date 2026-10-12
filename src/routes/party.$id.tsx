@@ -15,8 +15,9 @@ import { EntrySheet } from "@/components/EntrySheet";
 import { ShareDialog, shareNative, shareWhatsApp } from "@/components/ShareDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import { balanceText, labels, receiptMessage, useEntries, useParty, useProfile, type Entry } from "@/lib/ledger";
-import { fmtDate, fmtTime, inr, initials } from "@/lib/format";
+import { fmtDate, fmtTime, inr, initials, formatPhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { downloadStatement, type Range } from "@/lib/pdf";
 
@@ -41,6 +42,7 @@ const monthRange = (offset: number): Range => {
 
 function PartyPage() {
   const { id } = Route.useParams();
+  const { t, lang } = useI18n();
   const { session } = useAuth();
   const { data: profile } = useProfile(session?.user.id);
   const { data: party, isLoading } = useParty(id);
@@ -78,7 +80,7 @@ function PartyPage() {
       </div>
     );
 
-  const l = labels(party.kind);
+  const l = labels(party.kind, lang);
   const business = profile?.business_name;
   const reminder = receiptMessage({ business, party, balance: party.balance });
 
@@ -127,7 +129,7 @@ function PartyPage() {
           <span className="grid place-items-center h-10 w-10 rounded-full bg-accent text-accent-foreground font-semibold">{initials(party.name)}</span>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold truncate">{party.name}</h1>
-            <p className="text-xs opacity-75 capitalize">{party.kind}{party.phone ? ` · ${party.phone}` : ""}</p>
+            <p className="text-xs opacity-75 capitalize">{party.kind}{party.phone ? ` · ${formatPhone(party.phone)}` : ""}</p>
           </div>
           {party.phone && (
             <a href={`tel:${party.phone}`} className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Call">
@@ -140,7 +142,7 @@ function PartyPage() {
         </div>
         <div className="mt-5 rounded-2xl bg-card text-card-foreground p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-muted-foreground">{balanceText(party.balance)}</p>
+            <p className="text-xs text-muted-foreground">{balanceText(party.balance, lang)}</p>
             <p className={cn("text-3xl font-extrabold font-display", party.balance > 0 ? "text-gain" : party.balance < 0 ? "text-loss" : "")}>
               {inr(party.balance)}
             </p>
@@ -160,12 +162,12 @@ function PartyPage() {
       </header>
 
       <div className="px-4 mt-4 flex text-[11px] uppercase tracking-wide text-muted-foreground">
-        <span className="flex-1">Entry</span>
+        <span className="flex-1">{t("entries")}</span>
         <span className="w-20 text-right">{l.gave}</span>
         <span className="w-20 text-right">{l.got}</span>
       </div>
       <ul className="mt-1 px-2 space-y-1.5">
-        {rows.length === 0 && <li className="text-center text-muted-foreground py-12">No entries yet. Add the first one below.</li>}
+        {rows.length === 0 && <li className="text-center text-muted-foreground py-12">{t("no_entries_yet")}</li>}
         {rows.map((e) => (
           <li key={e.id}>
             <button
