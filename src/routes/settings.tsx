@@ -1,13 +1,20 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, KeyRound, LogOut, Share2 } from "lucide-react";
+import { ArrowLeft, KeyRound, LogOut, Share2, Info, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PinDots, PinPad } from "@/components/PinPad";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -113,12 +120,42 @@ function SettingsPage() {
         <button
           type="button"
           onClick={handleBack}
-          className="grid place-items-center h-10 w-10 rounded-full bg-secondary"
+          className="grid place-items-center h-10 w-10 rounded-full bg-secondary text-foreground hover:bg-secondary/80 transition"
           aria-label="Back"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-2xl font-bold">Settings</h1>
+        <h1 className="text-2xl font-bold flex-1">Settings</h1>
+
+        {/* Top-Right '?' Help & Options Button */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="grid place-items-center h-10 w-10 rounded-full bg-secondary hover:bg-secondary/80 text-foreground font-bold text-lg transition"
+              aria-label="Help and Options"
+            >
+              ?
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52 rounded-xl p-1 shadow-lg">
+            <DropdownMenuItem
+              onClick={() => navigate({ to: "/about" })}
+              className="cursor-pointer gap-2.5 py-2.5 px-3 rounded-lg text-sm font-medium"
+            >
+              <Info className="h-4 w-4 text-primary" />
+              <span>About this app</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="my-1" />
+            <DropdownMenuItem
+              onClick={() => navigate({ to: "/delete-account" })}
+              className="cursor-pointer gap-2.5 py-2.5 px-3 rounded-lg text-sm font-medium text-destructive focus:text-destructive focus:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+              <span>Delete account</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
       <section className="mx-4 rounded-2xl bg-card border p-4 space-y-4">
