@@ -10,6 +10,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { NotifyPrompt } from "@/components/NotifyPrompt";
 import { useParties, useProfile, balanceText, type PartyKind } from "@/lib/ledger";
 import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import { inr, initials, fmtDate, formatPhone, normalizePhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/")({
 
 function Dashboard() {
   const { session } = useAuth();
+  const { t, lang } = useI18n();
   const { data: profile } = useProfile(session?.user.id);
   const { data: parties, isLoading } = useParties();
   const [tab, setTab] = useState<PartyKind>("customer");
@@ -139,7 +141,7 @@ function Dashboard() {
                 aria-selected={active}
                 role="tab"
               >
-                <span>{k === "customer" ? "Customers" : "Suppliers"}</span>
+                <span>{k === "customer" ? t("customers") : t("suppliers")}</span>
                 <span
                   className={cn(
                     "text-xs px-2 py-0.5 rounded-full font-bold transition-colors",
@@ -158,11 +160,11 @@ function Dashboard() {
 
       <div className="-mt-14 mx-4 grid grid-cols-2 rounded-2xl bg-card shadow-lg border overflow-hidden">
         <div className="p-4 border-r">
-          <p className="flex items-center gap-1 text-xs text-muted-foreground"><ArrowDownLeft className="h-3.5 w-3.5 text-gain" /> You'll get</p>
+          <p className="flex items-center gap-1 text-xs text-muted-foreground"><ArrowDownLeft className="h-3.5 w-3.5 text-gain" /> {t("you_will_get")}</p>
           <p className="text-xl font-bold text-gain mt-1">{inr(toGet)}</p>
         </div>
         <div className="p-4">
-          <p className="flex items-center gap-1 text-xs text-muted-foreground"><ArrowUpRight className="h-3.5 w-3.5 text-loss" /> You'll give</p>
+          <p className="flex items-center gap-1 text-xs text-muted-foreground"><ArrowUpRight className="h-3.5 w-3.5 text-loss" /> {t("you_will_give")}</p>
           <p className="text-xl font-bold text-loss mt-1">{inr(toGive)}</p>
         </div>
       </div>
@@ -173,7 +175,7 @@ function Dashboard() {
       <div className="px-4 mt-5">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input className="h-12 pl-9 bg-card" placeholder={`Search ${tab}s`} value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input className="h-12 pl-9 bg-card" placeholder={t("search_placeholder")} value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
       </div>
 
@@ -182,8 +184,8 @@ function Dashboard() {
           [0, 1, 2].map((i) => <Skeleton key={i} className="h-16 m-2 rounded-xl" />)}
         {!isLoading && list.length === 0 && (
           <li className="text-center py-16 px-6 text-muted-foreground">
-            <p className="font-display text-lg text-foreground">No {tab}s yet</p>
-            <p className="text-sm mt-1">Tap the button below to add your first {tab}.</p>
+            <p className="font-display text-lg text-foreground">{tab === "customer" ? t("no_customers_yet") : t("no_suppliers_yet")}</p>
+            <p className="text-sm mt-1">{t("add_first_party_hint")}</p>
           </li>
         )}
         {list.map((p) => (
@@ -206,7 +208,7 @@ function Dashboard() {
                 <p className={cn("font-bold", p.balance > 0 ? "text-gain" : p.balance < 0 ? "text-loss" : "text-muted-foreground")}>
                   {inr(p.balance)}
                 </p>
-                <p className="text-[11px] text-muted-foreground">{balanceText(p.balance)}</p>
+                <p className="text-[11px] text-muted-foreground">{balanceText(p.balance, lang)}</p>
               </div>
             </Link>
           </li>
@@ -215,7 +217,7 @@ function Dashboard() {
 
       <div className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] inset-x-0 flex justify-center pointer-events-none">
         <Button className="pointer-events-auto h-14 px-6 rounded-full shadow-xl bg-accent text-accent-foreground hover:bg-accent/90 text-base" onClick={() => setAdding(true)}>
-          <Plus className="mr-1 h-5 w-5" /> Add {tab === "customer" ? "Customer" : "Supplier"}
+          <Plus className="mr-1 h-5 w-5" /> {tab === "customer" ? t("add_customer") : t("add_supplier")}
         </Button>
       </div>
       <AddPartyDialog open={adding} onOpenChange={setAdding} kind={tab} />
