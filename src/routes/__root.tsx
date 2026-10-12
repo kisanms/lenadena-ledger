@@ -16,6 +16,7 @@ import { AuthProvider } from "@/lib/auth";
 import { AppGate } from "@/components/AppGate";
 import { Toaster } from "@/components/ui/sonner";
 import { initPwa } from "@/lib/pwa";
+import { I18nProvider } from "@/lib/i18n";
 
 function NotFoundComponent() {
   return (
@@ -118,10 +119,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AppGate>
-          <Outlet />
-        </AppGate>
-        <Toaster position="top-center" />
+        <I18nProvider>
+          <AppGate>
+            <Outlet />
+          </AppGate>
+          <Toaster position="top-center" />
+        </I18nProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
