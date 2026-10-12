@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, KeyRound, LogOut } from "lucide-react";
+import { ArrowLeft, KeyRound, LogOut, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,6 +70,43 @@ function SettingsPage() {
     toast.success("Profile saved");
   };
 
+  const handleShareApp = async () => {
+    const shareUrl = "https://lenadena-one-stop-solution.vercel.app/apk";
+    const shareText = `📲 Download the app:\n${shareUrl}`;
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: "LenaDena — Digital Khata",
+          text: "📲 Download the app:",
+          url: shareUrl,
+        });
+        return;
+      } catch (err: unknown) {
+        if ((err as Error)?.name === "AbortError") {
+          return;
+        }
+      }
+    }
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareText);
+        toast.success("APK download link copied to clipboard!");
+      } else {
+        const input = document.createElement("textarea");
+        input.value = shareText;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        document.body.removeChild(input);
+        toast.success("APK download link copied to clipboard!");
+      }
+    } catch {
+      toast.error("Could not share or copy link");
+    }
+  };
+
   return (
     <div className="min-h-dvh max-w-md mx-auto pb-10">
       <header className="flex items-center gap-3 px-4 py-5">
@@ -111,6 +148,28 @@ function SettingsPage() {
 
       <RecoveryPinRow />
       <PushRow />
+
+      <section className="mx-4 mt-4 rounded-2xl bg-card border p-4 space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/10 text-primary shrink-0">
+            <Share2 className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm">Share LenaDena App</p>
+            <p className="text-xs text-muted-foreground">
+              Share the APK download link with customers and suppliers
+            </p>
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          className="w-full h-11 font-medium gap-2"
+          onClick={handleShareApp}
+        >
+          <Share2 className="h-4 w-4" />
+          Share APK download link
+        </Button>
+      </section>
 
       <div className="mx-4 mt-4"><InstallBanner always /></div>
 
