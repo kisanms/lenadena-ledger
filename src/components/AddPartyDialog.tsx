@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizePhone } from "@/lib/format";
 import type { PartyKind } from "@/lib/ledger";
+import { useI18n } from "@/lib/i18n";
 
 type ContactsNav = Navigator & {
   contacts?: { select: (p: string[], o?: { multiple?: boolean }) => Promise<{ name?: string[]; tel?: string[]; email?: string[] }[]> };
@@ -30,6 +31,7 @@ export function AddPartyDialog({
   const [saving, setSaving] = useState(false);
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const canPick = typeof navigator !== "undefined" && "contacts" in navigator;
 
   const pick = async () => {
@@ -73,7 +75,7 @@ export function AddPartyDialog({
         <div className="mx-auto w-full max-w-md px-4 pb-8">
           <DrawerHeader className="px-0">
             <DrawerTitle className="font-display text-2xl">
-              Add {kind === "customer" ? "Customer" : "Supplier"}
+              {kind === "customer" ? t("add_customer") : t("add_supplier")}
             </DrawerTitle>
           </DrawerHeader>
           {canPick && (
