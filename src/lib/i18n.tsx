@@ -84,14 +84,14 @@ export const translations = {
   add_customer: {
     en: "Add Customer",
     hi: "ग्राहक जोड़ें",
-    hinglish: "+ Customer Add Karein",
+    hinglish: "Customer Add Karein",
     gu: "ગ્રાહક ઉમેરો",
     mr: "ग्राहक जोडा",
   },
   add_supplier: {
     en: "Add Supplier",
     hi: "सप्लायर जोड़ें",
-    hinglish: "+ Supplier Add Karein",
+    hinglish: "Supplier Add Karein",
     gu: "સપ્લાયર ઉમેરો",
     mr: "सप्लायर जोडा",
   },
