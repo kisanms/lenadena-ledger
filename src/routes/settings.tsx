@@ -210,7 +210,7 @@ function SettingsPage() {
       </section>
 
       <RecoveryPinRow />
-      <PushRow />
+   
 
       <section className="mx-4 mt-4 rounded-2xl bg-card border p-4 space-y-3">
         <div className="flex items-center gap-3">
