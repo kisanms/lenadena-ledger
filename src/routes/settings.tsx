@@ -20,7 +20,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { RecoveryPinRow } from "@/components/RecoveryPinRow";
 import { InstallBanner } from "@/components/InstallBanner";
-import { PushRow } from "@/components/PushRow";
 import { useProfile } from "@/lib/ledger";
 import { clearLock, hasPin, setPin } from "@/lib/lock";
 import { useI18n, languages, type LangCode } from "@/lib/i18n";
