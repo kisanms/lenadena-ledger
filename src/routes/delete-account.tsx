@@ -85,33 +85,34 @@ function DeleteAccountPage() {
 
       // 2. Perform selected deletion mode
       if (mode === "wipe_all") {
-        // Mode A: Permanently delete all ledger entries, parties, push subs, and profile
-        const { error: entriesErr } = await supabase.from("entries").delete().eq("user_id", uid);
-        if (entriesErr) console.error("Error deleting entries:", entriesErr);
+        // Mode A: Permanently delete all ledger data AND the auth user account
+        // Calling secure RPC function that completely removes rows from
+        // entries, parties, push_subs, recovery_pins, profiles, and auth.users
+        const { error: rpcError } = await supabase.rpc("delete_user_account");
 
-        const { error: partiesErr } = await supabase.from("parties").delete().eq("user_id", uid);
-        if (partiesErr) console.error("Error deleting parties:", partiesErr);
-
-        await supabase.from("push_subs").delete().eq("user_id", uid);
-
-        // Wipe profile personal info
-        await supabase
-          .from("profiles")
-          .update({
-            business_name: null,
-            owner_name: null,
-            phone: null,
-            phone_norm: null,
-          })
-          .eq("id", uid);
+        if (rpcError) {
+          console.error("delete_user_account RPC error:", rpcError);
+          // If RPC is missing in DB, provide helpful instructions
+          toast.error(
+            `Database deletion failed: ${rpcError.message}. Please apply the delete_user_account migration in your Lovable Cloud/Supabase SQL editor.`
+          );
+          setIsSubmitting(false);
+          return;
+        }
 
         // Clear local locks and cached credentials
         clearLock();
         localStorage.removeItem("ld_pin_hash");
         localStorage.removeItem("ld_unlocked");
 
-        await signOut();
-        toast.success("All your business data and account have been permanently deleted.");
+        // Clear local Supabase tokens
+        try {
+          await supabase.auth.signOut({ scope: "local" });
+        } catch (e) {
+          console.warn("Local sign-out cleanup:", e);
+        }
+
+        toast.success("All your business data and login account have been permanently deleted.");
         navigate({ to: "/welcome", replace: true });
       } else {
         // Mode B: Disconnect / Reset account on this device, but keep cloud ledger for future login
@@ -162,7 +163,7 @@ function DeleteAccountPage() {
         <div className="text-xs space-y-1">
           <p className="font-bold text-sm">Please read carefully</p>
           <p className="leading-relaxed opacity-90">
-            Choose whether you want to completely erase all your business records or disconnect your account while keeping records safe for future login.
+            Choose whether you want to completely erase all your business records and delete your login, or disconnect your account while keeping records safe for future login.
           </p>
         </div>
       </div>
@@ -185,7 +186,7 @@ function DeleteAccountPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 font-bold text-sm text-destructive">
               <Trash2 className="h-4 w-4" />
-              <span>1. Permanently delete all data</span>
+              <span>1. Permanently delete user &amp; all data</span>
             </div>
             <div
               className={`h-5 w-5 rounded-full border flex items-center justify-center ${
@@ -196,7 +197,7 @@ function DeleteAccountPage() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Deletes <strong>all customer records, supplier accounts, ledger entries, and business profile</strong>. This action is irreversible. You will not be able to recover this data.
+            Completely deletes <strong>your login credentials, profile, customer and supplier records, and all ledger transactions</strong> from the database. After deletion, you <strong>cannot log in again</strong> with this account.
           </p>
         </div>
 
@@ -212,7 +213,7 @@ function DeleteAccountPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 font-bold text-sm text-primary">
               <RotateCcw className="h-4 w-4" />
-              <span>2. Delete account &amp; keep data for re-login</span>
+              <span>2. Disconnect &amp; keep data for re-login</span>
             </div>
             <div
               className={`h-5 w-5 rounded-full border flex items-center justify-center ${
@@ -223,7 +224,7 @@ function DeleteAccountPage() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Clears your session, PIN lock, and credentials from this phone, but <strong>safely retains your business records in the cloud</strong>. When you log back in in the future, all your data will show again.
+            Clears your session and PIN lock from this phone, but <strong>safely retains your business records and login in the cloud</strong>. When you log back in in the future, all your data will show again.
           </p>
         </div>
       </section>
@@ -286,7 +287,7 @@ function DeleteAccountPage() {
             "Processing..."
           ) : mode === "wipe_all" ? (
             <>
-              <Trash2 className="h-4 w-4" /> Permanently Wipe All Data
+              <Trash2 className="h-4 w-4" /> Permanently Delete Account &amp; Data
             </>
           ) : (
             <>
