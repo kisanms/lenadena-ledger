@@ -177,6 +177,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_user_account: { Args: never; Returns: undefined }
       has_recovery_pin: { Args: never; Returns: boolean }
       login_email_for_phone: { Args: { _phone: string }; Returns: string }
       norm_phone: { Args: { p: string }; Returns: string }
