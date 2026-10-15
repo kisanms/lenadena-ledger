@@ -21,7 +21,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { RecoveryPinRow } from "@/components/RecoveryPinRow";
 import { InstallBanner } from "@/components/InstallBanner";
-import { PushRow } from "@/components/PushRow";
 import { useProfile } from "@/lib/ledger";
 import { clearLock, hasPin, setPin } from "@/lib/lock";
 import { useI18n, languages, type LangCode } from "@/lib/i18n";
@@ -187,24 +186,7 @@ function SettingsPage() {
         </div>
       </section>
 
-      {/* Dark Mode Slide Toggle Section */}
-      <section className="mx-4 mb-4 rounded-2xl bg-card border p-4">
-        <div className="flex items-center gap-3">
-          <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/10 text-primary shrink-0">
-            {isDark ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm">{t("dark_mode")}</p>
-            <p className="text-xs text-muted-foreground">{t("dark_mode_desc")}</p>
-          </div>
-          <Switch
-            checked={isDark}
-            onCheckedChange={toggleTheme}
-            aria-label={t("dark_mode")}
-          />
-        </div>
-      </section>
-
+     
       <section className="mx-4 rounded-2xl bg-card border p-4 space-y-4">
         <h2 className="font-semibold">{t("business_profile")}</h2>
         <div className="space-y-1.5"><Label htmlFor="biz">{t("business_name")}</Label><Input id="biz" className="h-12" value={biz} onChange={(e) => setBiz(e.target.value)} placeholder="Sharma General Store" /></div>
@@ -231,7 +213,23 @@ function SettingsPage() {
       </section>
 
       <RecoveryPinRow />
-      <PushRow />
+ {/* Dark Mode Slide Toggle Section */}
+      <section className="mx-4 mb-4 rounded-2xl bg-card border p-4">
+        <div className="flex items-center gap-3">
+          <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/10 text-primary shrink-0">
+            {isDark ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm">{t("dark_mode")}</p>
+            <p className="text-xs text-muted-foreground">{t("dark_mode_desc")}</p>
+          </div>
+          <Switch
+            checked={isDark}
+            onCheckedChange={toggleTheme}
+            aria-label={t("dark_mode")}
+          />
+        </div>
+      </section>
 
       <section className="mx-4 mt-4 rounded-2xl bg-card border p-4 space-y-3">
         <div className="flex items-center gap-3">
