@@ -257,6 +257,20 @@ export const translations = {
     gu: "એપની ભાષા",
     mr: "ॲपची भाषा",
   },
+  dark_mode: {
+    en: "Dark mode",
+    hi: "डार्क मोड",
+    hinglish: "Dark Mode",
+    gu: "ડાર્ક મોડ",
+    mr: "डार्क मोड",
+  },
+  dark_mode_desc: {
+    en: "Switch between light and dark themes",
+    hi: "लाइट और डार्क थीम में बदलें",
+    hinglish: "Light aur dark theme me switch karein",
+    gu: "લાઇટ અને ડાર્ક થીમ વચ્ચે બદલો",
+    mr: "लाइट आणि डार्क थीम दरम्यान बदला",
+  },
   app_language_desc: {
     en: "Select your preferred language",
     hi: "अपनी पसंदीदा भाषा चुनें",
