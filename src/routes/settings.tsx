@@ -214,7 +214,7 @@ function SettingsPage() {
 
       <RecoveryPinRow />
  {/* Dark Mode Slide Toggle Section */}
-      <section className="mx-4 mb-4 rounded-2xl bg-card border p-4">
+      <section className="mx-4 mb-4 mt-4 rounded-2xl bg-card border p-4">
         <div className="flex items-center gap-3">
           <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/10 text-primary shrink-0">
             {isDark ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
