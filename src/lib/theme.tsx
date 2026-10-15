@@ -39,7 +39,7 @@ function applyThemeToDocument(t: Theme) {
   }
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) {
-    meta.setAttribute("content", t === "dark" ? "#182620" : "#1f4d3d");
+    meta.setAttribute("content", t === "dark" ? "#0b3c2b" : "#1f4d3d");
   }
 }
 
