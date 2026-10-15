@@ -1,3 +1,4 @@
+import { ThemeProvider, useTheme } from "@/lib/theme";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -100,9 +101,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var s=localStorage.getItem('lenadena_theme');var d=s==='dark'||(!s&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark';}}catch(e){}})();`,
+          }}
+        />
       </head>
       <body>
         {children}
@@ -112,20 +118,27 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function ThemedToaster() {
+  const { isDark } = useTheme();
+  return <Toaster position="top-center" theme={isDark ? "dark" : "light"} />;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEffect(() => { initPwa(); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <I18nProvider>
-          <AppGate>
-            <Outlet />
-          </AppGate>
-          <Toaster position="top-center" />
-        </I18nProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <I18nProvider>
+            <AppGate>
+              <Outlet />
+            </AppGate>
+            <ThemedToaster />
+          </I18nProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
