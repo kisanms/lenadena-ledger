@@ -95,30 +95,68 @@
 }
 
 .dark {
-  --background: oklch(0.18 0.02 165);
-  --foreground: oklch(0.95 0.015 85);
-  --card: oklch(0.23 0.025 165);
-  --card-foreground: oklch(0.95 0.015 85);
-  --popover: oklch(0.23 0.025 165);
-  --popover-foreground: oklch(0.95 0.015 85);
-  --primary: oklch(0.78 0.15 70);
-  --primary-foreground: oklch(0.2 0.03 60);
-  --secondary: oklch(0.28 0.03 165);
-  --secondary-foreground: oklch(0.95 0.015 85);
-  --muted: oklch(0.28 0.03 165);
-  --muted-foreground: oklch(0.72 0.02 120);
-  --accent: oklch(0.78 0.15 70);
-  --accent-foreground: oklch(0.2 0.03 60);
-  --destructive: oklch(0.65 0.19 27);
+  /* Clean, comfortable dark slate background */
+  --background: oklch(0.14 0.006 260);
+  --foreground: oklch(0.96 0.005 260);
+
+  /* Elevated surface for cards and dialogs */
+  --card: oklch(0.19 0.008 260);
+  --card-foreground: oklch(0.96 0.005 260);
+  --popover: oklch(0.19 0.008 260);
+  --popover-foreground: oklch(0.96 0.005 260);
+
+  /* Signature LenaDena deep emerald green (replaces murky tone & mustard yellow) */
+  --primary: oklch(0.34 0.08 165);
+  --primary-foreground: oklch(0.98 0.005 85);
+
+  /* Neutral dark slate for buttons, badges & avatars */
+  --secondary: oklch(0.24 0.010 260);
+  --secondary-foreground: oklch(0.92 0.008 260);
+
+  /* Crisp, legible secondary text */
+  --muted: oklch(0.22 0.008 260);
+  --muted-foreground: oklch(0.68 0.015 250);
+
+  /* Warm gold accent for the floating Add Party button */
+  --accent: oklch(0.76 0.15 72);
+  --accent-foreground: oklch(0.15 0.03 60);
+
+  /* High-contrast destructive red */
+  --destructive: oklch(0.62 0.20 27);
   --destructive-foreground: oklch(0.98 0.01 85);
-  --gain: oklch(0.7 0.15 155);
-  --gain-foreground: oklch(0.15 0.02 160);
-  --loss: oklch(0.68 0.18 30);
-  --loss-foreground: oklch(0.15 0.02 30);
-  --whatsapp: oklch(0.7 0.17 150);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.78 0.15 70);
+
+  /* Ledger gain (You'll get) - vivid emerald with crisp white text */
+  --gain: oklch(0.68 0.16 155);
+  --gain-foreground: oklch(0.98 0.01 85);
+
+  /* Ledger loss (You'll give) - vivid coral red with crisp white text */
+  --loss: oklch(0.65 0.20 28);
+  --loss-foreground: oklch(0.98 0.01 85);
+
+  /* WhatsApp button */
+  --whatsapp: oklch(0.66 0.17 150);
+
+  /* Subtle dark slate hairline borders & inputs */
+  --border: oklch(0.27 0.008 260);
+  --input: oklch(0.27 0.008 260);
+  --ring: oklch(0.45 0.11 165);
+
+  /* Charts */
+  --chart-1: oklch(0.68 0.16 155);
+  --chart-2: oklch(0.65 0.20 28);
+  --chart-3: oklch(0.76 0.15 72);
+  --chart-4: oklch(0.48 0.11 165);
+  --chart-5: oklch(0.65 0.12 240);
+
+  /* Sidebar */
+  --sidebar: oklch(0.14 0.006 260);
+  --sidebar-foreground: oklch(0.96 0.005 260);
+  --sidebar-primary: oklch(0.34 0.08 165);
+  --sidebar-primary-foreground: oklch(0.98 0.005 85);
+  --sidebar-accent: oklch(0.22 0.008 260);
+  --sidebar-accent-foreground: oklch(0.92 0.008 260);
+  --sidebar-border: oklch(0.27 0.008 260);
+  --sidebar-ring: oklch(0.45 0.11 165);
 }
 
 @layer base {
