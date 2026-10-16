@@ -95,68 +95,83 @@
 }
 
 .dark {
-  /* Clean, comfortable dark slate background */
-  --background: oklch(0.14 0.006 260);
-  --foreground: oklch(0.96 0.005 260);
+  /* Softer charcoal background — comfortable, no pitch-black glare */
+  --background: oklch(0.19 0.007 250);
+  --foreground: oklch(0.96 0.005 250);
 
-  /* Elevated surface for cards and dialogs */
-  --card: oklch(0.19 0.008 260);
-  --card-foreground: oklch(0.96 0.005 260);
-  --popover: oklch(0.19 0.008 260);
-  --popover-foreground: oklch(0.96 0.005 260);
+  /* Elevated slightly lighter cards & popovers */
+  --card: oklch(0.25 0.008 250);
+  --card-foreground: oklch(0.96 0.005 250);
+  --popover: oklch(0.25 0.008 250);
+  --popover-foreground: oklch(0.96 0.005 250);
 
-  /* Signature LenaDena deep emerald green (replaces murky tone & mustard yellow) */
-  --primary: oklch(0.34 0.08 165);
-  --primary-foreground: oklch(0.98 0.005 85);
+  /* Vibrant, high-visibility emerald green for slide toggles, buttons, links & icons */
+  --primary: oklch(0.68 0.16 156);
+  --primary-foreground: oklch(0.12 0.035 160);
 
-  /* Neutral dark slate for buttons, badges & avatars */
-  --secondary: oklch(0.24 0.010 260);
-  --secondary-foreground: oklch(0.92 0.008 260);
+  /* Clean slate surface for secondary buttons & badges */
+  --secondary: oklch(0.29 0.010 250);
+  --secondary-foreground: oklch(0.95 0.005 250);
 
-  /* Crisp, legible secondary text */
-  --muted: oklch(0.22 0.008 260);
-  --muted-foreground: oklch(0.68 0.015 250);
+  /* Highly legible secondary text & muted elements */
+  --muted: oklch(0.28 0.008 250);
+  --muted-foreground: oklch(0.74 0.012 250);
 
-  /* Warm gold accent for the floating Add Party button */
-  --accent: oklch(0.76 0.15 72);
+  /* Warm radiant gold accent for Add Party floating button */
+  --accent: oklch(0.78 0.15 72);
   --accent-foreground: oklch(0.15 0.03 60);
 
   /* High-contrast destructive red */
-  --destructive: oklch(0.62 0.20 27);
+  --destructive: oklch(0.64 0.22 27);
   --destructive-foreground: oklch(0.98 0.01 85);
 
-  /* Ledger gain (You'll get) - vivid emerald with crisp white text */
-  --gain: oklch(0.68 0.16 155);
+  /* Ledger gain (You'll get) - bright emerald with crisp text */
+  --gain: oklch(0.70 0.16 152);
   --gain-foreground: oklch(0.98 0.01 85);
 
-  /* Ledger loss (You'll give) - vivid coral red with crisp white text */
-  --loss: oklch(0.65 0.20 28);
+  /* Ledger loss (You'll give) - bright coral red with crisp text */
+  --loss: oklch(0.66 0.20 28);
   --loss-foreground: oklch(0.98 0.01 85);
 
   /* WhatsApp button */
   --whatsapp: oklch(0.66 0.17 150);
 
-  /* Subtle dark slate hairline borders & inputs */
-  --border: oklch(0.27 0.008 260);
-  --input: oklch(0.27 0.008 260);
-  --ring: oklch(0.45 0.11 165);
+  /* Well-defined hairline borders and input fields */
+  --border: oklch(0.32 0.010 250);
+  --input: oklch(0.34 0.012 250);
+  --ring: oklch(0.68 0.16 156);
 
   /* Charts */
-  --chart-1: oklch(0.68 0.16 155);
-  --chart-2: oklch(0.65 0.20 28);
-  --chart-3: oklch(0.76 0.15 72);
-  --chart-4: oklch(0.48 0.11 165);
-  --chart-5: oklch(0.65 0.12 240);
+  --chart-1: oklch(0.70 0.16 152);
+  --chart-2: oklch(0.66 0.20 28);
+  --chart-3: oklch(0.78 0.15 72);
+  --chart-4: oklch(0.55 0.12 165);
+  --chart-5: oklch(0.68 0.12 240);
 
   /* Sidebar */
-  --sidebar: oklch(0.14 0.006 260);
-  --sidebar-foreground: oklch(0.96 0.005 260);
-  --sidebar-primary: oklch(0.34 0.08 165);
-  --sidebar-primary-foreground: oklch(0.98 0.005 85);
-  --sidebar-accent: oklch(0.22 0.008 260);
-  --sidebar-accent-foreground: oklch(0.92 0.008 260);
-  --sidebar-border: oklch(0.27 0.008 260);
-  --sidebar-ring: oklch(0.45 0.11 165);
+  --sidebar: oklch(0.19 0.007 250);
+  --sidebar-foreground: oklch(0.96 0.005 250);
+  --sidebar-primary: oklch(0.68 0.16 156);
+  --sidebar-primary-foreground: oklch(0.12 0.035 160);
+  --sidebar-accent: oklch(0.28 0.008 250);
+  --sidebar-accent-foreground: oklch(0.95 0.005 250);
+  --sidebar-border: oklch(0.32 0.010 250);
+  --sidebar-ring: oklch(0.68 0.16 156);
+}
+
+/* Header in dark mode: soft, less-saturated calm forest green header */
+.dark header.bg-primary {
+  background-color: oklch(0.25 0.032 165) !important;
+  color: oklch(0.96 0.005 250) !important;
+}
+
+.dark header.bg-primary .bg-primary-foreground {
+  background-color: oklch(0.96 0.005 250) !important;
+  color: oklch(0.18 0.035 165) !important;
+}
+
+.dark header.bg-primary .text-primary-foreground {
+  color: oklch(0.96 0.005 250) !important;
 }
 
 @layer base {
