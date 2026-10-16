@@ -168,7 +168,7 @@ function SettingsPage() {
       {/* App Language Section */}
       <section className="mx-4 mb-4 rounded-2xl bg-card border p-4 space-y-3">
         <div className="flex items-center gap-3">
-          <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/10 text-primary shrink-0">
+          <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/15 text-primary shrink-0">
             <LanguagesIcon className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0">
@@ -179,26 +179,32 @@ function SettingsPage() {
             variant="outline"
             size="sm"
             onClick={() => setLangSheet(true)}
-            className="font-semibold rounded-xl h-9 px-3 border-primary/30 text-primary hover:bg-primary/5"
+            className="font-semibold rounded-xl h-9 px-3 border-primary/40 text-primary hover:bg-primary/10"
           >
             {activeLangObj.nativeLabel}
           </Button>
         </div>
       </section>
 
-     
+ 
+
       <section className="mx-4 rounded-2xl bg-card border p-4 space-y-4">
         <h2 className="font-semibold">{t("business_profile")}</h2>
         <div className="space-y-1.5"><Label htmlFor="biz">{t("business_name")}</Label><Input id="biz" className="h-12" value={biz} onChange={(e) => setBiz(e.target.value)} placeholder="Sharma General Store" /></div>
         <div className="space-y-1.5"><Label htmlFor="own">{t("owner_name")}</Label><Input id="own" className="h-12" value={owner} onChange={(e) => setOwner(e.target.value)} /></div>
         <div className="space-y-1.5"><Label htmlFor="ph">{t("phone_number")}</Label><Input id="ph" className="h-12" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
-        <Button className="w-full h-12" onClick={saveProfile}>{t("save_profile")}</Button>
+        <Button className="w-full h-12 font-semibold" onClick={saveProfile}>{t("save_profile")}</Button>
       </section>
 
       <section className="mx-4 mt-4 rounded-2xl bg-card border divide-y">
         <div className="flex items-center gap-3 p-4">
-          <KeyRound className="h-5 w-5 text-primary" />
-          <div className="flex-1"><p className="font-medium">{t("pin_lock")}</p><p className="text-xs text-muted-foreground">{t("pin_lock_hint")}</p></div>
+          <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/15 text-primary shrink-0">
+            <KeyRound className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm">{t("pin_lock")}</p>
+            <p className="text-xs text-muted-foreground">{t("pin_lock_hint")}</p>
+          </div>
           <Switch
             checked={pinOn}
             onCheckedChange={(on) => {
@@ -208,15 +214,16 @@ function SettingsPage() {
           />
         </div>
         {pinOn && (
-          <button className="w-full text-left p-4 text-sm text-primary font-medium" onClick={() => setPinSheet(true)}>{t("change_pin")}</button>
+          <button className="w-full text-left p-4 text-sm text-primary font-semibold hover:bg-primary/5 transition-colors" onClick={() => setPinSheet(true)}>{t("change_pin")}</button>
         )}
       </section>
 
       <RecoveryPinRow />
- {/* Dark Mode Slide Toggle Section */}
+
+           {/* Dark Mode Slide Toggle Section */}
       <section className="mx-4 mb-4 mt-4 rounded-2xl bg-card border p-4">
         <div className="flex items-center gap-3">
-          <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/10 text-primary shrink-0">
+          <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/15 text-primary shrink-0">
             {isDark ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
           </div>
           <div className="flex-1 min-w-0">
@@ -233,7 +240,7 @@ function SettingsPage() {
 
       <section className="mx-4 mt-4 rounded-2xl bg-card border p-4 space-y-3">
         <div className="flex items-center gap-3">
-          <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/10 text-primary shrink-0">
+          <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/15 text-primary shrink-0">
             <Share2 className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0">
@@ -245,10 +252,10 @@ function SettingsPage() {
         </div>
         <Button
           variant="outline"
-          className="w-full h-11 font-medium gap-2"
+          className="w-full h-11 font-semibold gap-2 border-border"
           onClick={handleShareApp}
         >
-          <Share2 className="h-4 w-4" />
+          <Share2 className="h-4 w-4 text-primary" />
           {t("share_app_btn")}
         </Button>
       </section>
@@ -258,7 +265,7 @@ function SettingsPage() {
       <section className="mx-4 mt-4 rounded-2xl bg-card border p-4">
         <p className="text-xs text-muted-foreground">Signed in as</p>
         <p className="font-medium">{session?.user.email}</p>
-        <Button variant="outline" className="w-full h-12 mt-4 text-destructive" onClick={() => signOut()}>
+        <Button variant="outline" className="w-full h-12 mt-4 text-destructive border-destructive/20 hover:bg-destructive/10 font-semibold" onClick={() => signOut()}>
           <LogOut className="mr-2 h-4 w-4" /> {t("sign_out")}
         </Button>
       </section>
@@ -288,7 +295,7 @@ function SettingsPage() {
                   className={cn(
                     "w-full flex items-center justify-between p-3.5 rounded-xl transition text-left border",
                     isSelected
-                      ? "border-primary bg-primary/5 font-semibold text-primary"
+                      ? "border-primary bg-primary/10 font-semibold text-primary"
                       : "border-border hover:bg-secondary/60 text-foreground"
                   )}
                 >
