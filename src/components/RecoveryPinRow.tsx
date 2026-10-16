@@ -36,9 +36,11 @@ export function RecoveryPinRow() {
   return (
     <section className="mx-4 mt-4 rounded-2xl bg-card border">
       <div className="flex items-center gap-3 p-4">
-        <ShieldCheck className="h-5 w-5 text-primary" />
-        <div className="flex-1">
-          <p className="font-medium">Password recovery PIN</p>
+        <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/15 text-primary shrink-0">
+          <ShieldCheck className="h-5 w-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm">Password recovery PIN</p>
           <p className="text-xs text-muted-foreground">
             {isSet === null ? "Checking…" : isSet ? "Set — use it if you forget your password" : "Not set — set one now so you can reset your password"}
           </p>
@@ -49,12 +51,12 @@ export function RecoveryPinRow() {
           {pin(a, setA, "New PIN")}
           {pin(b, setB, "Confirm PIN")}
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button className="flex-1" disabled={busy} onClick={submit}>{busy ? "Saving…" : "Save"}</Button>
+            <Button variant="outline" className="flex-1 font-semibold" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button className="flex-1 font-semibold" disabled={busy} onClick={submit}>{busy ? "Saving…" : "Save"}</Button>
           </div>
         </div>
       ) : (
-        <button className="w-full border-t text-left p-4 text-sm text-primary font-medium" onClick={() => setOpen(true)}>
+        <button className="w-full border-t text-left p-4 text-sm text-primary font-semibold hover:bg-primary/5 transition-colors" onClick={() => setOpen(true)}>
           {isSet ? "Change recovery PIN" : "Set recovery PIN"}
         </button>
       )}
