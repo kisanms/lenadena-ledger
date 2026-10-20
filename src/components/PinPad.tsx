@@ -1,4 +1,4 @@
-import { Delete, Fingerprint } from "lucide-react";
+import { Delete } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function PinDots({ value, error }: { value: string; error?: boolean }) {
@@ -21,11 +21,9 @@ export function PinDots({ value, error }: { value: string; error?: boolean }) {
 export function PinPad({
   onDigit,
   onDelete,
-  onBio,
 }: {
   onDigit: (d: string) => void;
   onDelete: () => void;
-  onBio?: (() => void) | undefined;
 }) {
   const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
   const btn = "h-16 rounded-2xl text-2xl font-semibold bg-card active:bg-secondary transition-colors";
@@ -36,13 +34,7 @@ export function PinPad({
           {k}
         </button>
       ))}
-      {onBio ? (
-        <button className={cn(btn, "flex items-center justify-center text-primary")} onClick={onBio} aria-label="Use biometrics">
-          <Fingerprint className="h-7 w-7" />
-        </button>
-      ) : (
-        <span />
-      )}
+      <span />
       <button className={btn} onClick={() => onDigit("0")}>0</button>
       <button className={cn(btn, "flex items-center justify-center")} onClick={onDelete} aria-label="Delete">
         <Delete className="h-6 w-6" />

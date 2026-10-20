@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, MessageCircle, Phone, Share2, Trash2 } from "lucide-react";
+import { ArrowLeft, FileDown, MessageCircle, Phone, Share2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,13 +9,17 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { EntrySheet } from "@/components/EntrySheet";
 import { ShareDialog, shareNative, shareWhatsApp } from "@/components/ShareDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import { balanceText, labels, receiptMessage, useEntries, useParty, useProfile, type Entry } from "@/lib/ledger";
-import { fmtDate, fmtTime, inr, initials } from "@/lib/format";
+import { fmtDate, fmtTime, inr, initials, formatPhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { downloadStatement, type Range } from "@/lib/pdf";
 
 export const Route = createFileRoute("/party/$id")({
   head: () => ({
@@ -29,8 +33,16 @@ export const Route = createFileRoute("/party/$id")({
   component: PartyPage,
 });
 
+const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const monthRange = (offset: number): Range => {
+  const now = new Date();
+  return { from: iso(new Date(now.getFullYear(), now.getMonth() + offset, 1)), to: iso(new Date(now.getFullYear(), now.getMonth() + offset + 1, 0)) };
+};
+
 function PartyPage() {
   const { id } = Route.useParams();
+  const { t, lang } = useI18n();
   const { session } = useAuth();
   const { data: profile } = useProfile(session?.user.id);
   const { data: party, isLoading } = useParty(id);
@@ -38,8 +50,18 @@ function PartyPage() {
   const [dir, setDir] = useState<"gave" | "got" | null>(null);
   const [share, setShare] = useState<string | null>(null);
   const [del, setDel] = useState<Entry | "party" | null>(null);
+  const [pdfOpen, setPdfOpen] = useState(false);
+  const [range, setRange] = useState<Range>({});
   const qc = useQueryClient();
   const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate({ to: "/", replace: true });
+    }
+  };
 
   const rows = useMemo(() => {
     let run = 0;
@@ -54,13 +76,25 @@ function PartyPage() {
     return (
       <div className="p-6 text-center">
         <p>Not found.</p>
-        <Link to="/" className="text-primary underline">Back</Link>
+        <button type="button" onClick={handleBack} className="text-primary underline">Back</button>
       </div>
     );
 
-  const l = labels(party.kind);
+  const l = labels(party.kind, lang);
   const business = profile?.business_name;
   const reminder = receiptMessage({ business, party, balance: party.balance });
+
+  const savePdf = async (r: Range) => {
+    setPdfOpen(false);
+    const toastId = toast.loading("Generating PDF statement...");
+    try {
+      await downloadStatement(party, entries ?? [], business, r);
+      toast.success("Statement downloaded", { id: toastId });
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      toast.error("Failed to generate PDF", { id: toastId });
+    }
+  };
 
   const confirmDelete = async () => {
     if (!del) return;
@@ -68,7 +102,7 @@ function PartyPage() {
       const { error } = await supabase.from("parties").delete().eq("id", party.id);
       if (error) return void toast.error(error.message);
       qc.invalidateQueries({ queryKey: ["parties"] });
-      navigate({ to: "/" });
+      navigate({ to: "/", replace: true });
     } else {
       const { error } = await supabase.from("entries").delete().eq("id", del.id);
       if (error) return void toast.error(error.message);
@@ -81,29 +115,34 @@ function PartyPage() {
   };
 
   return (
-    <div className="min-h-screen max-w-md mx-auto pb-32">
+    <div className="min-h-dvh max-w-md mx-auto pb-32">
       <header className="bg-primary text-primary-foreground px-4 pt-5 pb-6 rounded-b-[2rem]">
         <div className="flex items-center gap-3">
-          <Link to="/" className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Back">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10"
+            aria-label="Back"
+          >
             <ArrowLeft className="h-5 w-5" />
-          </Link>
+          </button>
           <span className="grid place-items-center h-10 w-10 rounded-full bg-accent text-accent-foreground font-semibold">{initials(party.name)}</span>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold truncate">{party.name}</h1>
-            <p className="text-xs opacity-75 capitalize">{party.kind}{party.phone ? ` · ${party.phone}` : ""}</p>
+            <p className="text-xs opacity-75 capitalize">{party.kind}{party.phone ? ` · ${formatPhone(party.phone)}` : ""}</p>
           </div>
           {party.phone && (
             <a href={`tel:${party.phone}`} className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Call">
               <Phone className="h-5 w-5" />
             </a>
           )}
-          <button onClick={() => setDel("party")} className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Delete party">
+          {!party.shared && <button onClick={() => setDel("party")} className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Delete party">
             <Trash2 className="h-5 w-5" />
-          </button>
+          </button>}
         </div>
         <div className="mt-5 rounded-2xl bg-card text-card-foreground p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-muted-foreground">{balanceText(party.balance)}</p>
+            <p className="text-xs text-muted-foreground">{balanceText(party.balance, lang)}</p>
             <p className={cn("text-3xl font-extrabold font-display", party.balance > 0 ? "text-gain" : party.balance < 0 ? "text-loss" : "")}>
               {inr(party.balance)}
             </p>
@@ -111,6 +150,9 @@ function PartyPage() {
           <div className="flex gap-2">
             <Button size="icon" className="h-11 w-11 rounded-full bg-whatsapp hover:bg-whatsapp/90 text-gain-foreground" onClick={() => shareWhatsApp(party.phone, reminder)} aria-label="WhatsApp reminder">
               <MessageCircle className="h-5 w-5" />
+            </Button>
+            <Button size="icon" variant="secondary" className="h-11 w-11 rounded-full" aria-label="Download PDF" onClick={() => setPdfOpen(true)}>
+              <FileDown className="h-5 w-5" />
             </Button>
             <Button size="icon" variant="secondary" className="h-11 w-11 rounded-full" onClick={() => shareNative(reminder)} aria-label="Share">
               <Share2 className="h-5 w-5" />
@@ -120,17 +162,17 @@ function PartyPage() {
       </header>
 
       <div className="px-4 mt-4 flex text-[11px] uppercase tracking-wide text-muted-foreground">
-        <span className="flex-1">Entry</span>
+        <span className="flex-1">{t("entries")}</span>
         <span className="w-20 text-right">{l.gave}</span>
         <span className="w-20 text-right">{l.got}</span>
       </div>
       <ul className="mt-1 px-2 space-y-1.5">
-        {rows.length === 0 && <li className="text-center text-muted-foreground py-12">No entries yet. Add the first one below.</li>}
+        {rows.length === 0 && <li className="text-center text-muted-foreground py-12">{t("no_entries_yet")}</li>}
         {rows.map((e) => (
           <li key={e.id}>
             <button
               onClick={() => setShare(receiptMessage({ business, party, entry: e, balance: e.running }))}
-              onContextMenu={(ev) => { ev.preventDefault(); setDel(e); }}
+              onContextMenu={(ev) => { ev.preventDefault(); if (!party.shared) setDel(e); }}
               className="w-full flex items-center rounded-xl bg-card border px-3 py-3 text-left"
             >
               <div className="flex-1 min-w-0">
@@ -140,21 +182,25 @@ function PartyPage() {
               </div>
               <span className="w-20 text-right font-semibold text-loss">{e.direction === "gave" ? inr(e.amount) : ""}</span>
               <span className="w-20 text-right font-semibold text-gain">{e.direction === "got" ? inr(e.amount) : ""}</span>
-              <span
+              {!party.shared && <span
                 role="button"
                 aria-label="Delete entry"
                 className="ml-2 p-1 text-muted-foreground"
                 onClick={(ev) => { ev.stopPropagation(); setDel(e); }}
               >
                 <Trash2 className="h-4 w-4" />
-              </span>
+              </span>}
             </button>
           </li>
         ))}
       </ul>
 
-      <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t">
-        <div className="max-w-md mx-auto grid grid-cols-2 gap-3 p-4">
+      {party.shared ? (
+        <p className="fixed bottom-0 inset-x-0 bg-secondary text-center text-sm text-muted-foreground p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          Shared by {party.name} · updates live
+        </p>
+      ) : <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t">
+        <div className="max-w-md mx-auto grid grid-cols-2 gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <Button className="h-14 text-base bg-loss hover:bg-loss/90 text-loss-foreground" onClick={() => setDir("gave")}>
             {l.gave} ₹
           </Button>
@@ -162,7 +208,7 @@ function PartyPage() {
             {l.got} ₹
           </Button>
         </div>
-      </div>
+      </div>}
 
       <EntrySheet
         open={!!dir}
@@ -187,6 +233,30 @@ function PartyPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={pdfOpen} onOpenChange={setPdfOpen}>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader className="pr-8 text-left sm:text-center">
+            <DialogTitle className="text-lg sm:text-xl">Download statement</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              ["All time", {}],
+              ["This month", monthRange(0)],
+              ["Last month", monthRange(-1)],
+              ["Last 30 days", { from: iso(addDays(new Date(), -29)), to: iso(new Date()) }],
+            ] as [string, Range][]).map(([label, r]) => (
+              <Button key={label} variant="outline" className="h-auto min-h-11 whitespace-normal px-2 py-2 text-sm sm:text-base" onClick={() => savePdf(r)}>{label}</Button>
+            ))}
+          </div>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+            <Input className="min-w-0 w-full px-2 text-xs sm:text-sm" type="date" value={range.from ?? ""} onChange={(e) => setRange((r) => ({ ...r, from: e.target.value || undefined }))} aria-label="From date" />
+            <span className="text-muted-foreground text-xs sm:text-sm">to</span>
+            <Input className="min-w-0 w-full px-2 text-xs sm:text-sm" type="date" value={range.to ?? ""} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value || undefined }))} aria-label="To date" />
+          </div>
+          <Button className="h-auto min-h-11 w-full whitespace-normal px-3 py-3 text-sm leading-snug sm:text-base" onClick={() => savePdf(range)}>Download selected period</Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { labels, type Entry, type Party } from "@/lib/ledger";
+import { useI18n } from "@/lib/i18n";
 import { inr } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +31,8 @@ export function EntrySheet({
   const [date, setDate] = useState(today());
   const [saving, setSaving] = useState(false);
   const qc = useQueryClient();
-  const l = labels(party.kind);
+  const { t, lang } = useI18n();
+  const l = labels(party.kind, lang);
   const isGot = direction === "got";
 
   useEffect(() => {
@@ -63,6 +65,7 @@ export function EntrySheet({
     qc.invalidateQueries({ queryKey: ["party", party.id] });
     qc.invalidateQueries({ queryKey: ["parties"] });
     onOpenChange(false);
+    void import("@/lib/push").then((m) => m.notifyParty(party.id));
     onSaved({ ...data, amount: Number(data.amount) } as Entry, projected);
   };
 
@@ -100,11 +103,11 @@ export function EntrySheet({
             )}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="edate">Date</Label>
+                <Label htmlFor="edate">{t("date")}</Label>
                 <Input id="edate" type="date" className="h-12" value={date} max={today()} onChange={(e) => setDate(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="enote">Note</Label>
+                <Label htmlFor="enote">{t("note_optional")}</Label>
                 <Input id="enote" className="h-12" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Bill no, items…" />
               </div>
             </div>
@@ -121,7 +124,7 @@ export function EntrySheet({
               onClick={save}
               disabled={saving}
             >
-              {saving ? "Saving…" : "Save entry"}
+              {saving ? "Saving…" : t("save_entry")}
             </Button>
           </div>
         </div>

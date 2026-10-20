@@ -58,34 +58,43 @@ export type Database = {
       parties: {
         Row: {
           balance: number
+          counterparty_id: string | null
           created_at: string
+          email: string | null
           id: string
           kind: string
           last_activity: string
           name: string
           note: string | null
+          owner_label: string | null
           phone: string | null
           user_id: string
         }
         Insert: {
           balance?: number
+          counterparty_id?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           kind?: string
           last_activity?: string
           name: string
           note?: string | null
+          owner_label?: string | null
           phone?: string | null
           user_id?: string
         }
         Update: {
           balance?: number
+          counterparty_id?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           kind?: string
           last_activity?: string
           name?: string
           note?: string | null
+          owner_label?: string | null
           phone?: string | null
           user_id?: string
         }
@@ -95,26 +104,71 @@ export type Database = {
         Row: {
           business_name: string | null
           created_at: string
+          email: string | null
           id: string
           owner_name: string | null
           phone: string | null
+          phone_norm: string | null
           updated_at: string
         }
         Insert: {
           business_name?: string | null
           created_at?: string
+          email?: string | null
           id: string
           owner_name?: string | null
           phone?: string | null
+          phone_norm?: string | null
           updated_at?: string
         }
         Update: {
           business_name?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           owner_name?: string | null
           phone?: string | null
+          phone_norm?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      push_subs: {
+        Row: {
+          created_at: string
+          endpoint: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recovery_pins: {
+        Row: {
+          fails: number
+          locked_until: string | null
+          pin_hash: string
+          user_id: string
+        }
+        Insert: {
+          fails?: number
+          locked_until?: string | null
+          pin_hash: string
+          user_id: string
+        }
+        Update: {
+          fails?: number
+          locked_until?: string | null
+          pin_hash?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -123,7 +177,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      delete_user_account: { Args: never; Returns: undefined }
+      has_recovery_pin: { Args: never; Returns: boolean }
+      login_email_for_phone: { Args: { _phone: string }; Returns: string }
+      norm_phone: { Args: { p: string }; Returns: string }
+      phone_taken: { Args: { _phone: string }; Returns: boolean }
+      push_targets: { Args: { _party: string }; Returns: string[] }
+      reset_password_with_pin: {
+        Args: { _id: string; _password: string; _pin: string }
+        Returns: Json
+      }
+      set_recovery_pin: { Args: { _pin: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

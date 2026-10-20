@@ -95,30 +95,83 @@
 }
 
 .dark {
-  --background: oklch(0.18 0.02 165);
-  --foreground: oklch(0.95 0.015 85);
-  --card: oklch(0.23 0.025 165);
-  --card-foreground: oklch(0.95 0.015 85);
-  --popover: oklch(0.23 0.025 165);
-  --popover-foreground: oklch(0.95 0.015 85);
-  --primary: oklch(0.78 0.15 70);
-  --primary-foreground: oklch(0.2 0.03 60);
-  --secondary: oklch(0.28 0.03 165);
-  --secondary-foreground: oklch(0.95 0.015 85);
-  --muted: oklch(0.28 0.03 165);
-  --muted-foreground: oklch(0.72 0.02 120);
-  --accent: oklch(0.78 0.15 70);
-  --accent-foreground: oklch(0.2 0.03 60);
-  --destructive: oklch(0.65 0.19 27);
+  /* Softer charcoal background — comfortable, no pitch-black glare */
+  --background: oklch(0.19 0.007 250);
+  --foreground: oklch(0.96 0.005 250);
+
+  /* Elevated slightly lighter cards & popovers */
+  --card: oklch(0.25 0.008 250);
+  --card-foreground: oklch(0.96 0.005 250);
+  --popover: oklch(0.25 0.008 250);
+  --popover-foreground: oklch(0.96 0.005 250);
+
+  /* Vibrant, high-visibility emerald green for slide toggles, buttons, links & icons */
+  --primary: oklch(0.68 0.16 156);
+  --primary-foreground: oklch(0.12 0.035 160);
+
+  /* Clean slate surface for secondary buttons & badges */
+  --secondary: oklch(0.29 0.010 250);
+  --secondary-foreground: oklch(0.95 0.005 250);
+
+  /* Highly legible secondary text & muted elements */
+  --muted: oklch(0.28 0.008 250);
+  --muted-foreground: oklch(0.74 0.012 250);
+
+  /* Warm radiant gold accent for Add Party floating button */
+  --accent: oklch(0.78 0.15 72);
+  --accent-foreground: oklch(0.15 0.03 60);
+
+  /* High-contrast destructive red */
+  --destructive: oklch(0.64 0.22 27);
   --destructive-foreground: oklch(0.98 0.01 85);
-  --gain: oklch(0.7 0.15 155);
-  --gain-foreground: oklch(0.15 0.02 160);
-  --loss: oklch(0.68 0.18 30);
-  --loss-foreground: oklch(0.15 0.02 30);
-  --whatsapp: oklch(0.7 0.17 150);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.78 0.15 70);
+
+  /* Ledger gain (You'll get) - bright emerald with crisp text */
+  --gain: oklch(0.70 0.16 152);
+  --gain-foreground: oklch(0.98 0.01 85);
+
+  /* Ledger loss (You'll give) - bright coral red with crisp text */
+  --loss: oklch(0.66 0.20 28);
+  --loss-foreground: oklch(0.98 0.01 85);
+
+  /* WhatsApp button */
+  --whatsapp: oklch(0.66 0.17 150);
+
+  /* Well-defined hairline borders and input fields */
+  --border: oklch(0.32 0.010 250);
+  --input: oklch(0.34 0.012 250);
+  --ring: oklch(0.68 0.16 156);
+
+  /* Charts */
+  --chart-1: oklch(0.70 0.16 152);
+  --chart-2: oklch(0.66 0.20 28);
+  --chart-3: oklch(0.78 0.15 72);
+  --chart-4: oklch(0.55 0.12 165);
+  --chart-5: oklch(0.68 0.12 240);
+
+  /* Sidebar */
+  --sidebar: oklch(0.19 0.007 250);
+  --sidebar-foreground: oklch(0.96 0.005 250);
+  --sidebar-primary: oklch(0.68 0.16 156);
+  --sidebar-primary-foreground: oklch(0.12 0.035 160);
+  --sidebar-accent: oklch(0.28 0.008 250);
+  --sidebar-accent-foreground: oklch(0.95 0.005 250);
+  --sidebar-border: oklch(0.32 0.010 250);
+  --sidebar-ring: oklch(0.68 0.16 156);
+}
+
+/* Header in dark mode: soft, less-saturated calm forest green header */
+.dark header.bg-primary {
+  background-color: oklch(0.25 0.032 165) !important;
+  color: oklch(0.96 0.005 250) !important;
+}
+
+.dark header.bg-primary .bg-primary-foreground {
+  background-color: oklch(0.96 0.005 250) !important;
+  color: oklch(0.18 0.035 165) !important;
+}
+
+.dark header.bg-primary .text-primary-foreground {
+  color: oklch(0.96 0.005 250) !important;
 }
 
 @layer base {

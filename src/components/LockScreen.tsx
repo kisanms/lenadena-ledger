@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 import { PinDots, PinPad } from "./PinPad";
-import { checkPin, hasBiometric, markUnlocked, verifyBiometric } from "@/lib/lock";
+import { checkPin, markUnlocked } from "@/lib/lock";
 import { useAuth } from "@/lib/auth";
 import { Logo } from "./Logo";
 
@@ -9,23 +8,6 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
   const { session, signOut } = useAuth();
   const [pin, setPin] = useState("");
   const [err, setErr] = useState(false);
-  const bio = hasBiometric();
-
-  const tryBio = async () => {
-    try {
-      if (await verifyBiometric()) {
-        markUnlocked();
-        onUnlock();
-      }
-    } catch {
-      toast.error("Biometric check failed — use your PIN");
-    }
-  };
-
-  useEffect(() => {
-    if (bio) void tryBio();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const press = async (d: string) => {
     if (pin.length >= 4) return;
@@ -51,7 +33,7 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
       </div>
       <PinDots value={pin} error={err} />
       <div className="w-full space-y-6">
-        <PinPad onDigit={press} onDelete={() => setPin((p) => p.slice(0, -1))} onBio={bio ? tryBio : undefined} />
+        <PinPad onDigit={press} onDelete={() => setPin((p) => p.slice(0, -1))} />
         <button className="block mx-auto text-sm text-muted-foreground underline" onClick={() => signOut()}>
           Forgot PIN? Log out
         </button>
