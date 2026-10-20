@@ -2,6 +2,7 @@ import type { LangCode } from "./i18n";
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { buildWebPayUrl, isValidUpiId } from "@/lib/upi";
 
 export type PartyKind = "customer" | "supplier";
 export type Party = {
@@ -129,7 +130,7 @@ function getActiveLang(): LangCode {
   try {
     const s = localStorage.getItem("lenadena_lang");
     if (s && ["en", "hi", "hinglish", "gu", "mr"].includes(s)) return s as LangCode;
-  } catch {}
+  } catch { }
   return "en";
 }
 
@@ -199,8 +200,10 @@ export function receiptMessage(opts: {
   entry?: { direction: "gave" | "got"; amount: number; note?: string | null; entry_date: string };
   balance: number;
   lang?: LangCode;
+  /** Shopkeeper's UPI ID, e.g. shop@okaxis. If valid, a pay link is added when balance is due. */
+  upiId?: string | null | undefined;
 }) {
-  const { business, party, entry, balance } = opts;
+  const { business, party, entry, balance, upiId } = opts;
   const currentLang = opts.lang || getActiveLang();
   const r = (n: number) => "₹" + Math.abs(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
   const lines = [`*${business || "LenaDena"}* 🧾`, `Namaste ${party.name},`, ""];
@@ -236,6 +239,27 @@ export function receiptMessage(opts: {
     const fullySettled = currentLang === "hi" ? "आपका खाता पूरी तरह चुकता है ✅" : currentLang === "gu" ? "ખાતું સંપૂર્ણ સરભર થયેલ છે ✅" : currentLang === "mr" ? "खाते पूर्णपणे चुकता झाले आहे ✅" : currentLang === "hinglish" ? "Aapka account fully settled hai ✅" : "Your account is fully settled ✅";
     lines.push(fullySettled);
   }
+
+  // Only include a payment link when money is owed to the shopkeeper and the UPI ID is valid.
+  if (balance > 0 && upiId && isValidUpiId(upiId.trim())) {
+    const payUrl = buildWebPayUrl({
+      pa: upiId.trim(),
+      pn: business || "LenaDena",
+      am: balance,
+      tn: `Bill payment - ${party.name}`,
+    });
+    const payLabel = currentLang === "hi"
+      ? "💳 UPI से भुगतान करें (GPay/PhonePe/Paytm):"
+      : currentLang === "gu"
+        ? "💳 UPI દ્વારા ચૂકવો (GPay/PhonePe/Paytm):"
+        : currentLang === "mr"
+          ? "💳 UPI द्वारे भरा (GPay/PhonePe/Paytm):"
+          : currentLang === "hinglish"
+            ? "💳 UPI se pay karein (GPay/PhonePe/Paytm):"
+            : "💳 Pay via UPI (GPay/PhonePe/Paytm):";
+    lines.push("", payLabel, payUrl);
+  }
+
   const footer = currentLang === "hi" ? "_LenaDena डिजिटल खाता द्वारा भेजा गया_" : currentLang === "gu" ? "_LenaDena ડિજિટલ ખાતાવહી દ્વારા મોકલેલ_" : currentLang === "mr" ? "_LenaDena डिजिटल खातावही द्वारे पाठवले_" : "_Sent via LenaDena digital khata_";
   lines.push("", footer);
   const dlText = currentLang === "hi" ? "📲 ऐप डाउनलोड करें:" : currentLang === "gu" ? "📲 એપ ડાઉનલોડ કરો:" : currentLang === "mr" ? "📲 ॲप डाउनलोड करा:" : "📲 Download the app:";

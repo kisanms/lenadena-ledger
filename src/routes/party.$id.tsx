@@ -15,9 +15,8 @@ import { EntrySheet } from "@/components/EntrySheet";
 import { ShareDialog, shareNative, shareWhatsApp } from "@/components/ShareDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { useI18n } from "@/lib/i18n";
 import { balanceText, labels, receiptMessage, useEntries, useParty, useProfile, type Entry } from "@/lib/ledger";
-import { fmtDate, fmtTime, inr, initials, formatPhone } from "@/lib/format";
+import { fmtDate, fmtTime, inr, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { downloadStatement, type Range } from "@/lib/pdf";
 
@@ -42,7 +41,6 @@ const monthRange = (offset: number): Range => {
 
 function PartyPage() {
   const { id } = Route.useParams();
-  const { t, lang } = useI18n();
   const { session } = useAuth();
   const { data: profile } = useProfile(session?.user.id);
   const { data: party, isLoading } = useParty(id);
@@ -54,14 +52,6 @@ function PartyPage() {
   const [range, setRange] = useState<Range>({});
   const qc = useQueryClient();
   const navigate = useNavigate();
-
-  const handleBack = () => {
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      navigate({ to: "/", replace: true });
-    }
-  };
 
   const rows = useMemo(() => {
     let run = 0;
@@ -76,24 +66,26 @@ function PartyPage() {
     return (
       <div className="p-6 text-center">
         <p>Not found.</p>
-        <button type="button" onClick={handleBack} className="text-primary underline">Back</button>
+        <Link to="/" className="text-primary underline">Back</Link>
       </div>
     );
 
-  const l = labels(party.kind, lang);
+  const l = labels(party.kind);
   const business = profile?.business_name;
-  const reminder = receiptMessage({ business, party, balance: party.balance });
+  const upiId =
+    (profile as Record<string, any> | undefined)?.["upi_id"] ||
+    (typeof window !== "undefined" ? localStorage.getItem("lenadena_upi_id") : null);
+  const reminder = receiptMessage({ business, party, balance: party.balance, upiId });
 
   const savePdf = async (r: Range) => {
     setPdfOpen(false);
-    const toastId = toast.loading("Generating PDF statement...");
-    try {
-      await downloadStatement(party, entries ?? [], business, r);
-      toast.success("Statement downloaded", { id: toastId });
-    } catch (err) {
-      console.error("PDF generation failed:", err);
-      toast.error("Failed to generate PDF", { id: toastId });
-    }
+    await downloadStatement(
+      party,
+      entries ?? [],
+      business,
+      r,
+      upiId ? { id: upiId, name: business || profile?.owner_name || undefined } : undefined
+    );
   };
 
   const confirmDelete = async () => {
@@ -102,7 +94,7 @@ function PartyPage() {
       const { error } = await supabase.from("parties").delete().eq("id", party.id);
       if (error) return void toast.error(error.message);
       qc.invalidateQueries({ queryKey: ["parties"] });
-      navigate({ to: "/", replace: true });
+      navigate({ to: "/" });
     } else {
       const { error } = await supabase.from("entries").delete().eq("id", del.id);
       if (error) return void toast.error(error.message);
@@ -118,18 +110,13 @@ function PartyPage() {
     <div className="min-h-dvh max-w-md mx-auto pb-32">
       <header className="bg-primary text-primary-foreground px-4 pt-5 pb-6 rounded-b-[2rem]">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10"
-            aria-label="Back"
-          >
+          <Link to="/" className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Back">
             <ArrowLeft className="h-5 w-5" />
-          </button>
+          </Link>
           <span className="grid place-items-center h-10 w-10 rounded-full bg-accent text-accent-foreground font-semibold">{initials(party.name)}</span>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold truncate">{party.name}</h1>
-            <p className="text-xs opacity-75 capitalize">{party.kind}{party.phone ? ` · ${formatPhone(party.phone)}` : ""}</p>
+            <p className="text-xs opacity-75 capitalize">{party.kind}{party.phone ? ` · ${party.phone}` : ""}</p>
           </div>
           {party.phone && (
             <a href={`tel:${party.phone}`} className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Call">
@@ -142,7 +129,7 @@ function PartyPage() {
         </div>
         <div className="mt-5 rounded-2xl bg-card text-card-foreground p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-muted-foreground">{balanceText(party.balance, lang)}</p>
+            <p className="text-xs text-muted-foreground">{balanceText(party.balance)}</p>
             <p className={cn("text-3xl font-extrabold font-display", party.balance > 0 ? "text-gain" : party.balance < 0 ? "text-loss" : "")}>
               {inr(party.balance)}
             </p>
@@ -162,16 +149,16 @@ function PartyPage() {
       </header>
 
       <div className="px-4 mt-4 flex text-[11px] uppercase tracking-wide text-muted-foreground">
-        <span className="flex-1">{t("entries")}</span>
+        <span className="flex-1">Entry</span>
         <span className="w-20 text-right">{l.gave}</span>
         <span className="w-20 text-right">{l.got}</span>
       </div>
       <ul className="mt-1 px-2 space-y-1.5">
-        {rows.length === 0 && <li className="text-center text-muted-foreground py-12">{t("no_entries_yet")}</li>}
+        {rows.length === 0 && <li className="text-center text-muted-foreground py-12">No entries yet. Add the first one below.</li>}
         {rows.map((e) => (
           <li key={e.id}>
             <button
-              onClick={() => setShare(receiptMessage({ business, party, entry: e, balance: e.running }))}
+              onClick={() => setShare(receiptMessage({ business, party, entry: e, balance: e.running, upiId }))}
               onContextMenu={(ev) => { ev.preventDefault(); if (!party.shared) setDel(e); }}
               className="w-full flex items-center rounded-xl bg-card border px-3 py-3 text-left"
             >
@@ -215,7 +202,7 @@ function PartyPage() {
         onOpenChange={(o) => !o && setDir(null)}
         party={party}
         direction={dir ?? "got"}
-        onSaved={(entry, bal) => setShare(receiptMessage({ business, party, entry, balance: bal }))}
+        onSaved={(entry, bal) => setShare(receiptMessage({ business, party, entry, balance: bal, upiId }))}
       />
       <ShareDialog open={!!share} onOpenChange={(o) => !o && setShare(null)} text={share ?? ""} phone={party.phone} title="Share receipt" />
 
@@ -235,26 +222,45 @@ function PartyPage() {
       </AlertDialog>
 
       <Dialog open={pdfOpen} onOpenChange={setPdfOpen}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader className="pr-8 text-left sm:text-center">
-            <DialogTitle className="text-lg sm:text-xl">Download statement</DialogTitle>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-sm rounded-2xl p-5">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Download statement</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 pt-1">
             {([
               ["All time", {}],
               ["This month", monthRange(0)],
               ["Last month", monthRange(-1)],
               ["Last 30 days", { from: iso(addDays(new Date(), -29)), to: iso(new Date()) }],
             ] as [string, Range][]).map(([label, r]) => (
-              <Button key={label} variant="outline" className="h-auto min-h-11 whitespace-normal px-2 py-2 text-sm sm:text-base" onClick={() => savePdf(r)}>{label}</Button>
+              <Button key={label} variant="outline" size="sm" className="h-10 text-xs" onClick={() => savePdf(r)}>
+                {label}
+              </Button>
             ))}
           </div>
-          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
-            <Input className="min-w-0 w-full px-2 text-xs sm:text-sm" type="date" value={range.from ?? ""} onChange={(e) => setRange((r) => ({ ...r, from: e.target.value || undefined }))} aria-label="From date" />
-            <span className="text-muted-foreground text-xs sm:text-sm">to</span>
-            <Input className="min-w-0 w-full px-2 text-xs sm:text-sm" type="date" value={range.to ?? ""} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value || undefined }))} aria-label="To date" />
+          <div className="space-y-1.5 pt-2">
+            <span className="text-xs text-muted-foreground font-medium">Or select custom period</span>
+            <div className="grid grid-cols-[1fr,auto,1fr] items-center gap-2">
+              <Input
+                type="date"
+                className="h-10 text-xs px-2"
+                value={range.from ?? ""}
+                onChange={(e) => setRange((r) => ({ ...r, from: e.target.value || undefined }))}
+                aria-label="From date"
+              />
+              <span className="text-muted-foreground text-xs font-medium">to</span>
+              <Input
+                type="date"
+                className="h-10 text-xs px-2"
+                value={range.to ?? ""}
+                onChange={(e) => setRange((r) => ({ ...r, to: e.target.value || undefined }))}
+                aria-label="To date"
+              />
+            </div>
           </div>
-          <Button className="h-auto min-h-11 w-full whitespace-normal px-3 py-3 text-sm leading-snug sm:text-base" onClick={() => savePdf(range)}>Download selected period</Button>
+          <Button className="w-full h-11 text-sm font-semibold mt-1" onClick={() => savePdf(range)}>
+            Download PDF Statement
+          </Button>
         </DialogContent>
       </Dialog>
     </div>

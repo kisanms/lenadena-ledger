@@ -23,7 +23,7 @@ import { RecoveryPinRow } from "@/components/RecoveryPinRow";
 import { InstallBanner } from "@/components/InstallBanner";
 import { useProfile } from "@/lib/ledger";
 import { clearLock, hasPin, setPin } from "@/lib/lock";
-import { useI18n, languages, type LangCode } from "@/lib/i18n";
+import { useI18n, languages } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/settings")({
@@ -48,15 +48,17 @@ function SettingsPage() {
   const { isDark, toggleTheme } = useTheme();
 
   const handleBack = () => {
-    if (window.history.length > 1) {
+    if (typeof window !== "undefined" && window.history.length > 1) {
       window.history.back();
     } else {
       navigate({ to: "/", replace: true });
     }
   };
+
   const [biz, setBiz] = useState("");
   const [owner, setOwner] = useState("");
   const [phone, setPhone] = useState("");
+  const [upiId, setUpiId] = useState("");
   const [pinOn, setPinOn] = useState(false);
   const [pinSheet, setPinSheet] = useState(false);
   const [langSheet, setLangSheet] = useState(false);
@@ -70,16 +72,42 @@ function SettingsPage() {
       setBiz(profile.business_name ?? "");
       setOwner(profile.owner_name ?? "");
       setPhone(profile.phone ?? "");
+      setUpiId(
+        (profile as Record<string, any> | undefined)?.["upi_id"] ??
+        (typeof window !== "undefined" ? localStorage.getItem("lenadena_upi_id") ?? "" : "")
+      );
+    } else if (typeof window !== "undefined") {
+      setUpiId(localStorage.getItem("lenadena_upi_id") ?? "");
     }
   }, [profile]);
 
   const activeLangObj = languages.find((l) => l.code === lang) || languages[0]!;
 
   const saveProfile = async () => {
-    const { error } = await supabase
-      .from("profiles")
-      .upsert({ id: uid, business_name: biz.trim() || null, owner_name: owner.trim() || null, phone: phone.trim() || null });
-    if (error) return void toast.error(error.message);
+    const cleanUpi = upiId.trim();
+    if (typeof window !== "undefined") {
+      localStorage.setItem("lenadena_upi_id", cleanUpi);
+    }
+
+    const payload: Record<string, any> = {
+      id: uid,
+      business_name: biz.trim() || null,
+      owner_name: owner.trim() || null,
+      phone: phone.trim() || null,
+    };
+    if (cleanUpi) payload["upi_id"] = cleanUpi;
+
+    const { error } = await supabase.from("profiles").upsert(payload as any);
+    if (error) {
+      if (error.message.includes("upi_id")) {
+        delete payload["upi_id"];
+        const { error: fallbackErr } = await supabase.from("profiles").upsert(payload as any);
+        if (fallbackErr) return void toast.error(fallbackErr.message);
+      } else {
+        return void toast.error(error.message);
+      }
+    }
+
     qc.invalidateQueries({ queryKey: ["profile", uid] });
     toast.success(t("save_profile"));
   };
@@ -186,16 +214,41 @@ function SettingsPage() {
         </div>
       </section>
 
- 
-
+      {/* Business Profile Section */}
       <section className="mx-4 rounded-2xl bg-card border p-4 space-y-4">
         <h2 className="font-semibold">{t("business_profile")}</h2>
-        <div className="space-y-1.5"><Label htmlFor="biz">{t("business_name")}</Label><Input id="biz" className="h-12" value={biz} onChange={(e) => setBiz(e.target.value)} placeholder="Sharma General Store" /></div>
-        <div className="space-y-1.5"><Label htmlFor="own">{t("owner_name")}</Label><Input id="own" className="h-12" value={owner} onChange={(e) => setOwner(e.target.value)} /></div>
-        <div className="space-y-1.5"><Label htmlFor="ph">{t("phone_number")}</Label><Input id="ph" className="h-12" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+        <div className="space-y-1.5">
+          <Label htmlFor="biz">{t("business_name")}</Label>
+          <Input id="biz" className="h-12" value={biz} onChange={(e) => setBiz(e.target.value)} placeholder="Sharma General Store" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="own">{t("owner_name")}</Label>
+          <Input id="own" className="h-12" value={owner} onChange={(e) => setOwner(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="ph">{t("phone_number")}</Label>
+          <Input id="ph" className="h-12" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="upi">UPI ID (for payments & QR code)</Label>
+            <span className="text-[10px] text-muted-foreground font-mono">GPay · PhonePe · Paytm</span>
+          </div>
+          <Input
+            id="upi"
+            className="h-12 font-mono text-sm"
+            value={upiId}
+            onChange={(e) => setUpiId(e.target.value)}
+            placeholder="e.g. 9876543210@paytm or shop@okaxis"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Adds an instant payment QR code on PDF statements and 1-tap pay link on WhatsApp reminders.
+          </p>
+        </div>
         <Button className="w-full h-12 font-semibold" onClick={saveProfile}>{t("save_profile")}</Button>
       </section>
 
+      {/* Security & PIN Lock */}
       <section className="mx-4 mt-4 rounded-2xl bg-card border divide-y">
         <div className="flex items-center gap-3 p-4">
           <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/15 text-primary shrink-0">
@@ -220,7 +273,7 @@ function SettingsPage() {
 
       <RecoveryPinRow />
 
-           {/* Dark Mode Slide Toggle Section */}
+      {/* Dark Mode Slide Toggle Section */}
       <section className="mx-4 mb-4 mt-4 rounded-2xl bg-card border p-4">
         <div className="flex items-center gap-3">
           <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/15 text-primary shrink-0">
@@ -238,6 +291,7 @@ function SettingsPage() {
         </div>
       </section>
 
+      {/* Share App Section */}
       <section className="mx-4 mt-4 rounded-2xl bg-card border p-4 space-y-3">
         <div className="flex items-center gap-3">
           <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/15 text-primary shrink-0">
