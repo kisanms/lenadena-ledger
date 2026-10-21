@@ -7,8 +7,6 @@ import {
   HelpCircle,
   QrCode,
   ShieldCheck,
-  Smartphone,
-  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -63,7 +61,6 @@ export function PayPage() {
   const [copied, setCopied] = useState(false);
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [qrSaved, setQrSaved] = useState(false);
-  const [showManualFallback, setShowManualFallback] = useState(false);
 
   const upiUri = pa
     ? buildUpiUri({
@@ -88,16 +85,6 @@ export function PayPage() {
     setCopied(true);
     toast.success("UPI ID copied! Open your UPI app and paste in 'Pay to UPI ID'");
     setTimeout(() => setCopied(false), 2500);
-  };
-
-  const openApp = () => {
-    if (!pa || !upiUri) return;
-    // Launch deep link on explicit customer tap
-    window.location.assign(upiUri);
-    // Automatically present the clear manual fallback in case the browser blocks intent
-    // Immediately show manual fallback
-    setShowManualFallback(true);
-    // fallback shown
   };
 
   const saveQr = () => {
@@ -135,8 +122,8 @@ export function PayPage() {
       {/* Trust Header */}
       <header className="py-3 text-center">
         <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold border border-emerald-500/20 shadow-xs">
-          <ShieldCheck className="h-4 w-4" />
-          <span>Verified Direct Khata Bill</span>
+          <QrCode className="h-4 w-4" />
+          <span>Pay directly using UPI</span>
         </div>
       </header>
 
@@ -183,9 +170,8 @@ export function PayPage() {
             </p>
 
             <Button
-              variant="outline"
               size="sm"
-              className="mt-2.5 h-9 font-medium text-xs rounded-xl"
+              className="mt-2.5 h-10 px-5 font-semibold text-sm rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white"
               onClick={saveQr}
             >
               <Download className="mr-1.5 h-3.5 w-3.5" />
@@ -213,13 +199,6 @@ export function PayPage() {
         {/* Action Buttons */}
         <div className="space-y-2.5 pt-1">
           <Button
-            className="w-full h-12 text-base font-semibold shadow-md bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
-            onClick={openApp}
-          >
-            <Smartphone className="mr-2 h-5 w-5" /> Open UPI App
-          </Button>
-
-          <Button
             variant="outline"
             className="w-full h-11 text-xs rounded-xl font-medium"
             onClick={copyUpi}
@@ -233,27 +212,25 @@ export function PayPage() {
           </Button>
         </div>
 
-        {/* Manual Fallback Section (Visible on demand or when tap-to-open was tried) */}
-        {(showManualFallback || copied) && (
-          <div className="p-3.5 bg-muted/60 border rounded-2xl text-left space-y-2 text-xs">
-            <div className="flex items-center gap-1.5 font-semibold text-foreground">
-              <HelpCircle className="h-4 w-4 text-primary" />
-              <span>How to pay manually in 3 quick steps:</span>
-            </div>
-            <ol className="list-decimal list-inside space-y-1 text-muted-foreground text-[11px] leading-relaxed pl-1">
-              <li>
-                Tap <strong>Copy UPI ID</strong> above.
-              </li>
-              <li>
-                Open <strong>GPay, PhonePe, Paytm, or BHIM</strong>.
-              </li>
-              <li>
-                Tap <strong>&ldquo;Pay to UPI ID&rdquo;</strong>, paste <strong>{pa}</strong>, and
-                enter <strong>₹{numAm ? numAm.toFixed(2) : "the due amount"}</strong>.
-              </li>
-            </ol>
+        {/* Manual payment instructions are always visible; direct app intents can be declined. */}
+        <div className="p-3.5 bg-muted/60 border rounded-2xl text-left space-y-2 text-xs">
+          <div className="flex items-center gap-1.5 font-semibold text-foreground">
+            <HelpCircle className="h-4 w-4 text-primary" />
+            <span>How to pay manually in 3 quick steps:</span>
           </div>
-        )}
+          <ol className="list-decimal list-inside space-y-1 text-muted-foreground text-[11px] leading-relaxed pl-1">
+            <li>
+              Tap <strong>Copy UPI ID</strong> above.
+            </li>
+            <li>
+              Open <strong>GPay, PhonePe, Paytm, or BHIM</strong>.
+            </li>
+            <li>
+              Tap <strong>&ldquo;Pay to UPI ID&rdquo;</strong>, paste <strong>{pa}</strong>, and
+              enter <strong>₹{numAm ? numAm.toFixed(2) : "the due amount"}</strong>.
+            </li>
+          </ol>
+        </div>
       </main>
 
       {/* Trust Footer */}
@@ -261,9 +238,6 @@ export function PayPage() {
         <p className="text-[11px] text-muted-foreground">
           LenaDena does not hold your funds. Money transfers directly to the merchant&apos;s bank
           account.
-        </p>
-        <p className="text-[10px] text-muted-foreground/75 font-mono">
-          0% commission · Direct peer-to-peer / merchant UPI
         </p>
       </footer>
     </div>
