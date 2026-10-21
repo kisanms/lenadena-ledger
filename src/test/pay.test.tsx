@@ -34,13 +34,7 @@ describe("PayPage Component", () => {
     });
   });
 
-  it("handles tap-to-open UPI app and reveals manual payment fallback", async () => {
-    const assignMock = vi.fn();
-    Object.defineProperty(window, "location", {
-      writable: true,
-      value: { assign: assignMock, origin: "https://test.local" },
-    });
-
+  it("does not offer direct app launch and always shows manual payment instructions", () => {
     vi.spyOn(RouteModule.Route, "useSearch").mockReturnValue({
       pa: "majumdarkishan46-1@okicici",
       pn: "Kisan",
@@ -49,18 +43,9 @@ describe("PayPage Component", () => {
 
     render(<RouteModule.PayPage />);
 
-    const openBtn = screen.getByRole("button", { name: /Open UPI App/i });
-    fireEvent.click(openBtn);
-
-    // Verifies window.location.assign was called with standard upi:// URI
-    expect(assignMock).toHaveBeenCalledWith(
-      expect.stringContaining("upi://pay?pa=majumdarkishan46-1%40okicici"),
-    );
-
-    // Verifies the manual fallback step-by-step guide is revealed
-    await waitFor(() => {
-      expect(screen.getByText(/How to pay manually in 3 quick steps:/i)).toBeInTheDocument();
-    });
+    expect(screen.queryByRole("button", { name: /Open UPI App/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/How to pay manually in 3 quick steps:/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Copy UPI ID/i })).toBeInTheDocument();
   });
 
   it("triggers QR download with descriptive filename and displays confirmation", async () => {
