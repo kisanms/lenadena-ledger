@@ -260,9 +260,17 @@ function Login() {
                   autoCapitalize="none"
                   autoCorrect="off"
                 />
-                <p className="text-[11px] text-muted-foreground">
-                  Save in small letters or numbers. Used if you ever forget your password.
-                </p>
+             <div className="mt-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-amber-900 dark:text-amber-200">
+  <div className="flex items-start gap-2">
+    <span className="text-base leading-none mt-0.5 select-none">⚠️</span>
+    <div className="space-y-0.5 text-left">
+      <p className="text-[11px] leading-relaxed text-amber-800/90 dark:text-amber-300/90">
+        Write in <strong>small letters or numbers</strong>. This secret answer is the <strong>only way</strong> to recover your account if you forget your password.
+      </p>
+    </div>
+  </div>
+</div>
+
               </Field>
             </div>
           )}
