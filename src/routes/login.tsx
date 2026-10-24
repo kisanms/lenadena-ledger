@@ -12,10 +12,12 @@ import {
   getSecurityQuestion,
   setSecurityQuestion,
   resetWithSecurityAnswer,
-  SECURITY_QUESTIONS,
+  SECURITY_QUESTION_LIST,
+  getLocalizedQuestion,
 } from "@/lib/auth-rpc";
 import { normalizePhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -31,6 +33,7 @@ const isEmail = (s: string) => /^\S+@\S+\.\S+$/.test(s);
 const isPhone = (s: string) => normalizePhone(s).length >= 10;
 
 function Login() {
+  const { lang } = useI18n();
   const [mode, setMode] = useState<"in" | "up" | "forgot">("in");
   const [id, setId] = useState("");
   const [name, setName] = useState("");
@@ -38,7 +41,7 @@ function Login() {
   const [phone, setPhone] = useState("");
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
-  const [selectedQ, setSelectedQ] = useState<string>(SECURITY_QUESTIONS[0]);
+  const [selectedQ, setSelectedQ] = useState<string>(SECURITY_QUESTION_LIST[0].id);
   const [secAnswer, setSecAnswer] = useState("");
   const [userQuestion, setUserQuestion] = useState<string | null>(null);
   const [lookingUpQuestion, setLookingUpQuestion] = useState(false);
@@ -241,8 +244,10 @@ function Login() {
                   value={selectedQ}
                   onChange={(e) => setSelectedQ(e.target.value)}
                 >
-                  {SECURITY_QUESTIONS.map((q) => (
-                    <option key={q} value={q}>{q}</option>
+                  {SECURITY_QUESTION_LIST.map((q) => (
+                    <option key={q.id} value={q.id}>
+                      {q.labels[lang] || q.labels.en}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -272,7 +277,9 @@ function Login() {
               ) : userQuestion ? (
                 <div className="p-3.5 rounded-xl border bg-primary/5 space-y-1">
                   <span className="text-xs font-medium text-muted-foreground">Your Question:</span>
-                  <p className="text-sm font-semibold text-foreground">{userQuestion}</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {getLocalizedQuestion(userQuestion, lang)}
+                  </p>
                 </div>
               ) : (
                 <Button
