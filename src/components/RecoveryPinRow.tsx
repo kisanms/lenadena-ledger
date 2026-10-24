@@ -1,63 +1,99 @@
 import { useEffect, useState } from "react";
-import { ShieldCheck } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { hasRecoveryPin, setRecoveryPin } from "@/lib/auth-rpc";
+import { hasSecurityQuestion, setSecurityQuestion, SECURITY_QUESTIONS } from "@/lib/auth-rpc";
 
 export function RecoveryPinRow() {
-  const [isSet, setIsSet] = useState<boolean | null>(null);
+  const [status, setStatus] = useState<{ has: boolean; question: string | null } | null>(null);
   const [open, setOpen] = useState(false);
-  const [a, setA] = useState("");
-  const [b, setB] = useState("");
+  const [question, setQuestion] = useState<string>(SECURITY_QUESTIONS[0]);
+  const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    hasRecoveryPin().then(setIsSet).catch(() => setIsSet(null));
+    hasSecurityQuestion().then(setStatus).catch(() => setStatus(null));
   }, []);
 
   const submit = async () => {
-    if (!/^\d{4}$/.test(a)) return void toast.error("Enter 4 digits");
-    if (a !== b) return void toast.error("PINs don't match");
+    const clean = answer.trim().toLowerCase();
+    if (!question) return void toast.error("Select a question");
+    if (clean.length < 2) return void toast.error("Answer must be at least 2 characters");
     setBusy(true);
     try {
-      const r = await setRecoveryPin(a);
+      const r = await setSecurityQuestion(question, clean);
       if (!r.ok) return void toast.error(r.error);
-      toast.success("Recovery PIN saved");
-      setIsSet(true); setOpen(false); setA(""); setB("");
-    } finally { setBusy(false); }
+      toast.success("Security question & answer saved!");
+      setStatus({ has: true, question });
+      setOpen(false);
+      setAnswer("");
+    } finally {
+      setBusy(false);
+    }
   };
-
-  const pin = (v: string, set: (s: string) => void, ph: string) => (
-    <Input className="h-12 text-base tracking-[0.5em]" type="password" inputMode="numeric" maxLength={4} placeholder={ph}
-      value={v} onChange={(e) => set(e.target.value.replace(/\D/g, "").slice(0, 4))} />
-  );
 
   return (
     <section className="mx-4 mt-4 rounded-2xl bg-card border">
       <div className="flex items-center gap-3 p-4">
         <div className="grid place-items-center h-10 w-10 rounded-xl bg-primary/15 text-primary shrink-0">
-          <ShieldCheck className="h-5 w-5" />
+          <HelpCircle className="h-5 w-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm">Password recovery PIN</p>
+          <p className="font-semibold text-sm">Security Recovery Question</p>
           <p className="text-xs text-muted-foreground">
-            {isSet === null ? "Checking…" : isSet ? "Set — use it if you forget your password" : "Not set — set one now so you can reset your password"}
+            {status === null
+              ? "Checking…"
+              : status.has
+              ? `Set: "${status.question}"`
+              : "Not set — set one now so you can recover your password easily"}
           </p>
         </div>
       </div>
       {open ? (
         <div className="space-y-3 px-4 pb-4">
-          {pin(a, setA, "New PIN")}
-          {pin(b, setB, "Confirm PIN")}
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1 font-semibold" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button className="flex-1 font-semibold" disabled={busy} onClick={submit}>{busy ? "Saving…" : "Save"}</Button>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-muted-foreground">Select Question</label>
+            <select
+              className="w-full h-11 px-3 text-sm rounded-lg border bg-background text-foreground"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+            >
+              {SECURITY_QUESTIONS.map((q) => (
+                <option key={q} value={q}>{q}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-muted-foreground">Your Secret Answer</label>
+            <Input
+              className="h-11 text-base lowercase"
+              type="text"
+              placeholder="e.g. dog, sharma, delhi"
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value.toLowerCase())}
+              autoCapitalize="none"
+              autoCorrect="off"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Small letters or numbers. Case doesn't matter when recovering.
+            </p>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <Button variant="outline" className="flex-1 font-semibold" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button className="flex-1 font-semibold" disabled={busy} onClick={submit}>
+              {busy ? "Saving…" : "Save"}
+            </Button>
           </div>
         </div>
       ) : (
-        <button className="w-full border-t text-left p-4 text-sm text-primary font-semibold hover:bg-primary/5 transition-colors" onClick={() => setOpen(true)}>
-          {isSet ? "Change recovery PIN" : "Set recovery PIN"}
+        <button
+          className="w-full border-t text-left p-4 text-sm text-primary font-semibold hover:bg-primary/5 transition-colors"
+          onClick={() => setOpen(true)}
+        >
+          {status?.has ? "Change recovery question" : "Set recovery question"}
         </button>
       )}
     </section>
