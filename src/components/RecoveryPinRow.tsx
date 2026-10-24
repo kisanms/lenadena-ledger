@@ -3,12 +3,19 @@ import { HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { hasSecurityQuestion, setSecurityQuestion, SECURITY_QUESTIONS } from "@/lib/auth-rpc";
+import {
+  hasSecurityQuestion,
+  setSecurityQuestion,
+  SECURITY_QUESTION_LIST,
+  getLocalizedQuestion,
+} from "@/lib/auth-rpc";
+import { useI18n } from "@/lib/i18n";
 
 export function RecoveryPinRow() {
+  const { lang } = useI18n();
   const [status, setStatus] = useState<{ has: boolean; question: string | null } | null>(null);
   const [open, setOpen] = useState(false);
-  const [question, setQuestion] = useState<string>(SECURITY_QUESTIONS[0]);
+  const [question, setQuestion] = useState<string>(SECURITY_QUESTION_LIST[0].id);
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -45,7 +52,7 @@ export function RecoveryPinRow() {
             {status === null
               ? "Checking…"
               : status.has
-              ? `Set: "${status.question}"`
+              ? `Set: "${getLocalizedQuestion(status.question, lang)}"`
               : "Not set — set one now so you can recover your password easily"}
           </p>
         </div>
@@ -59,8 +66,10 @@ export function RecoveryPinRow() {
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
             >
-              {SECURITY_QUESTIONS.map((q) => (
-                <option key={q} value={q}>{q}</option>
+              {SECURITY_QUESTION_LIST.map((q) => (
+                <option key={q.id} value={q.id}>
+                  {q.labels[lang] || q.labels.en}
+                </option>
               ))}
             </select>
           </div>
