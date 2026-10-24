@@ -6,17 +6,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
-import { phoneTaken, resetWithRecoveryPin, setRecoveryPin, signInWithPhone } from "@/lib/auth-rpc";
+import {
+  phoneTaken,
+  signInWithPhone,
+  getSecurityQuestion,
+  setSecurityQuestion,
+  resetWithSecurityAnswer,
+  SECURITY_QUESTIONS,
+} from "@/lib/auth-rpc";
 import { normalizePhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Sign in — LenaDena" },
-      { name: "description", content: "Sign in or create your LenaDena digital khata with mobile number or email and password." },
-      { property: "og:title", content: "Sign in — LenaDena" },
-      { property: "og:description", content: "Access your shop ledger securely." },
+      { title: "Sign in · LenaDena" },
+      { name: "description", content: "Sign in or create an account on LenaDena digital ledger." },
     ],
   }),
   component: Login,
@@ -33,7 +38,10 @@ function Login() {
   const [phone, setPhone] = useState("");
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
-  const [rpin, setRpin] = useState("");
+  const [selectedQ, setSelectedQ] = useState<string>(SECURITY_QUESTIONS[0]);
+  const [secAnswer, setSecAnswer] = useState("");
+  const [userQuestion, setUserQuestion] = useState<string | null>(null);
+  const [lookingUpQuestion, setLookingUpQuestion] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const signIn = async () => {
@@ -56,12 +64,14 @@ function Login() {
 
   const signUp = async () => {
     const normPhone = normalizePhone(phone);
+    const cleanAns = secAnswer.trim().toLowerCase();
     if (!name.trim()) return void toast.error("Enter your name or shop name");
     if (normPhone.length < 10) return void toast.error("Enter a valid 10-digit mobile number");
     if (!isEmail(email)) return void toast.error("Enter a valid email");
     if (pw.length < 6) return void toast.error("Password must be at least 6 characters");
     if (pw !== pw2) return void toast.error("Passwords don't match");
-    if (!/^\d{4}$/.test(rpin)) return void toast.error("Set a 4-digit recovery PIN");
+    if (!selectedQ) return void toast.error("Please pick a security question");
+    if (cleanAns.length < 2) return void toast.error("Please answer your security question");
     setBusy(true);
     try {
       const taken = await phoneTaken(normPhone);
@@ -76,8 +86,8 @@ function Login() {
       });
       if (error) return void toast.error(error.message);
       if (data.session) {
-        const r = await setRecoveryPin(rpin).catch(() => ({ ok: false as const }));
-        if (!r.ok) toast.error("Couldn't save recovery PIN — set it in Settings");
+        const r = await setSecurityQuestion(selectedQ, cleanAns).catch(() => ({ ok: false as const }));
+        if (!r.ok) toast.error("Couldn't save recovery answer — set it in Settings");
       }
       if (!data.session) toast.success("Account created. Please sign in.");
       else toast.success("Welcome to LenaDena!");
@@ -86,31 +96,41 @@ function Login() {
     }
   };
 
+  const fetchUserQuestion = async (identifier: string) => {
+    const v = identifier.trim();
+    if (!isEmail(v) && !isPhone(v)) return;
+    const target = isEmail(v) ? v : normalizePhone(v);
+    setLookingUpQuestion(true);
+    try {
+      const q = await getSecurityQuestion(target);
+      setUserQuestion(q);
+      if (!q) {
+        toast.info("No security question found for this account. Make sure mobile or email is correct.");
+      }
+    } finally {
+      setLookingUpQuestion(false);
+    }
+  };
+
   const reset = async () => {
     const v = id.trim();
+    const cleanAns = secAnswer.trim().toLowerCase();
     if (!isEmail(v) && !isPhone(v)) return void toast.error("Enter your mobile number or email");
     const target = isEmail(v) ? v : normalizePhone(v);
-    if (!/^\d{4}$/.test(rpin)) return void toast.error("Enter your 4-digit recovery PIN");
+    if (!cleanAns) return void toast.error("Enter your secret answer");
     if (pw.length < 6) return void toast.error("New password must be at least 6 characters");
     if (pw !== pw2) return void toast.error("Passwords don't match");
     setBusy(true);
     try {
-      const r = await resetWithRecoveryPin(target, rpin, pw);
+      const r = await resetWithSecurityAnswer(target, cleanAns, pw);
       if (!r.ok) return void toast.error(r.error);
-      toast.success("Password changed!");
+      toast.success("Password changed successfully!");
       const { error } = await supabase.auth.signInWithPassword({ email: r.email, password: pw });
-      if (error) { setMode("in"); setPw2(""); setRpin(""); }
+      if (error) { setMode("in"); setPw2(""); setSecAnswer(""); }
     } finally {
       setBusy(false);
     }
   };
-
-  const pinInput = (label: string) => (
-    <Field label={label}>
-      <Input className="h-12 text-base tracking-[0.5em]" type="password" inputMode="numeric" maxLength={4} value={rpin}
-        onChange={(e) => setRpin(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="••••" autoComplete="off" />
-    </Field>
-  );
 
   return (
     <div className="min-h-dvh flex flex-col px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] max-w-md mx-auto">
@@ -125,8 +145,15 @@ function Login() {
           {(["in", "up"] as const).map((m) => (
             <button
               key={m}
-              onClick={() => setMode(m)}
-              className={cn("h-10 rounded-lg text-sm font-semibold", (mode === m || (m === "in" && mode === "forgot")) ? "bg-card shadow" : "text-muted-foreground")}
+              onClick={() => {
+                setMode(m);
+                setUserQuestion(null);
+                setSecAnswer("");
+              }}
+              className={cn(
+                "h-10 rounded-lg text-sm font-semibold",
+                (mode === m || (m === "in" && mode === "forgot")) ? "bg-card shadow" : "text-muted-foreground"
+              )}
             >
               {m === "in" ? "Sign in" : "Create account"}
             </button>
@@ -141,16 +168,36 @@ function Login() {
           }}
         >
           {mode === "forgot" && (
-            <p className="text-sm text-muted-foreground">Enter your mobile or email and the 4-digit recovery PIN you set, then choose a new password.</p>
+            <p className="text-sm text-muted-foreground">
+              Enter your mobile or email. We'll show your security question so you can answer it and choose a new password.
+            </p>
           )}
+
           {mode !== "up" ? (
             <Field label="Mobile number or email">
-              <Input className="h-12 text-base" value={id} onChange={(e) => setId(e.target.value)} placeholder="98765 43210 or you@shop.com" autoComplete="username" />
+              <Input
+                className="h-12 text-base"
+                value={id}
+                onChange={(e) => {
+                  setId(e.target.value);
+                  if (mode === "forgot") setUserQuestion(null);
+                }}
+                onBlur={() => {
+                  if (mode === "forgot") fetchUserQuestion(id);
+                }}
+                placeholder="98765 43210 or you@shop.com"
+                autoComplete="username"
+              />
             </Field>
           ) : (
             <>
               <Field label="Your name / Shop name">
-                <Input className="h-12 text-base" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ramesh Kirana Store" />
+                <Input
+                  className="h-12 text-base"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ramesh Kirana Store"
+                />
               </Field>
               <Field label="Mobile number">
                 <Input
@@ -171,36 +218,127 @@ function Login() {
                 />
               </Field>
               <Field label="Email">
-                <Input className="h-12 text-base" type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@shop.com" autoComplete="email" />
+                <Input
+                  className="h-12 text-base"
+                  type="email"
+                  inputMode="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@shop.com"
+                  autoComplete="email"
+                />
               </Field>
             </>
           )}
-          {mode === "forgot" && pinInput("4-digit recovery PIN")}
+
+          {/* Security Question for Signup */}
+          {mode === "up" && (
+            <div className="space-y-3 p-3.5 rounded-xl border bg-card/60">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-muted-foreground">Password Recovery Question</Label>
+                <select
+                  className="w-full h-11 px-3 text-sm rounded-lg border bg-background text-foreground"
+                  value={selectedQ}
+                  onChange={(e) => setSelectedQ(e.target.value)}
+                >
+                  {SECURITY_QUESTIONS.map((q) => (
+                    <option key={q} value={q}>{q}</option>
+                  ))}
+                </select>
+              </div>
+              <Field label="Your Secret Answer">
+                <Input
+                  className="h-12 text-base lowercase"
+                  placeholder="e.g. dog, sharma, delhi"
+                  value={secAnswer}
+                  onChange={(e) => setSecAnswer(e.target.value.toLowerCase())}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Save in small letters or numbers. Used if you ever forget your password.
+                </p>
+              </Field>
+            </div>
+          )}
+
+          {/* Security Question for Forgot Mode */}
+          {mode === "forgot" && (
+            <div className="space-y-3">
+              {lookingUpQuestion ? (
+                <div className="p-3 text-sm text-center text-muted-foreground animate-pulse border rounded-xl">
+                  Fetching your security question…
+                </div>
+              ) : userQuestion ? (
+                <div className="p-3.5 rounded-xl border bg-primary/5 space-y-1">
+                  <span className="text-xs font-medium text-muted-foreground">Your Question:</span>
+                  <p className="text-sm font-semibold text-foreground">{userQuestion}</p>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full text-xs font-semibold"
+                  onClick={() => fetchUserQuestion(id)}
+                >
+                  Find my security question
+                </Button>
+              )}
+
+              <Field label="Your Secret Answer">
+                <Input
+                  className="h-12 text-base lowercase"
+                  placeholder="Type your answer"
+                  value={secAnswer}
+                  onChange={(e) => setSecAnswer(e.target.value.toLowerCase())}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                />
+              </Field>
+            </div>
+          )}
+
           <Field label={mode === "forgot" ? "New password" : "Password"}>
-            <Input className="h-12 text-base" type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete={mode === "in" ? "current-password" : "new-password"} />
+            <Input
+              className="h-12 text-base"
+              type="password"
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+              autoComplete={mode === "in" ? "current-password" : "new-password"}
+            />
           </Field>
+
           {mode !== "in" && (
             <Field label={mode === "forgot" ? "Confirm new password" : "Confirm password"}>
-              <Input className="h-12 text-base" type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} autoComplete="new-password" />
+              <Input
+                className="h-12 text-base"
+                type="password"
+                value={pw2}
+                onChange={(e) => setPw2(e.target.value)}
+                autoComplete="new-password"
+              />
             </Field>
           )}
-          {mode === "up" && (
-            <>
-              {pinInput("4-digit recovery PIN")}
-              <p className="-mt-2 text-xs text-muted-foreground">Remember this PIN — you'll need it if you forget your password.</p>
-            </>
-          )}
+
           {mode === "in" && (
-            <button type="button" className="text-sm text-primary font-medium" onClick={() => { setMode("forgot"); setPw(""); setPw2(""); setRpin(""); }}>
+            <button
+              type="button"
+              className="text-sm text-primary font-medium"
+              onClick={() => {
+                setMode("forgot");
+                setPw("");
+                setPw2("");
+                setSecAnswer("");
+                if (id) fetchUserQuestion(id);
+              }}
+            >
               Forgot password?
             </button>
           )}
+
           <Button type="submit" className="w-full h-14 text-base" disabled={busy}>
             {busy ? "Please wait…" : mode === "in" ? "Sign in" : mode === "up" ? "Create account" : "Reset password"}
           </Button>
-          {mode === "forgot" && (
-            <button type="button" className="w-full text-sm text-muted-foreground" onClick={() => setMode("in")}>Back to sign in</button>
-          )}
         </form>
       </div>
     </div>
@@ -210,7 +348,7 @@ function Login() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
+      <Label className="text-sm font-medium">{label}</Label>
       {children}
     </div>
   );
