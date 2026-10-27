@@ -43,7 +43,10 @@ export function EntrySheet({
       setAmount("");
       setNote("");
       setDate(today());
-      setReceipt((old) => { if (old) URL.revokeObjectURL(old.previewUrl); return null; });
+      setReceipt((old) => {
+        if (old) URL.revokeObjectURL(old.previewUrl);
+        return null;
+      });
     }
   }, [open]);
 
@@ -55,7 +58,10 @@ export function EntrySheet({
     setCompressing(true);
     try {
       const result = await compressReceiptImage(file);
-      setReceipt((old) => { if (old) URL.revokeObjectURL(old.previewUrl); return result; });
+      setReceipt((old) => {
+        if (old) URL.revokeObjectURL(old.previewUrl);
+        return result;
+      });
       toast.success(`Compressed to ${formatBytes(result.compressedSize)} (${result.savedPercent}% smaller)`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not process this image");
@@ -69,6 +75,7 @@ export function EntrySheet({
     setReceipt(null);
     if (fileInput.current) fileInput.current.value = "";
   };
+
   const projected = party.balance + (isGot ? -amt : amt);
   const due = Math.abs(party.balance);
   // Quick "settle full" helper: amount that brings balance to zero in this direction
@@ -108,38 +115,46 @@ export function EntrySheet({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
-        <div className="mx-auto w-full max-w-md px-4 pb-8">
-          <DrawerHeader className="px-0">
-            <DrawerTitle className={cn("font-display text-2xl", isGot ? "text-gain" : "text-loss")}>
+      <DrawerContent className="max-h-[92dvh] flex flex-col focus:outline-none">
+        <div className="mx-auto flex h-full max-h-[92dvh] w-full max-w-md flex-1 flex-col overflow-hidden min-h-0">
+          {/* Header */}
+          <DrawerHeader className="shrink-0 px-4 pt-2 pb-1.5 text-left">
+            <DrawerTitle className={cn("font-display text-xl sm:text-2xl font-bold", isGot ? "text-gain" : "text-loss")}>
               {isGot ? l.got : l.gave} · {party.name}
             </DrawerTitle>
-            <p className="text-sm text-muted-foreground">{isGot ? l.gotHint : l.gaveHint}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">{isGot ? l.gotHint : l.gaveHint}</p>
           </DrawerHeader>
-          <div className="space-y-4">
+
+          {/* Scrollable Form Body */}
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 py-2 space-y-3.5 overscroll-contain">
+            {/* Amount input */}
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl text-muted-foreground">₹</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-semibold text-muted-foreground">₹</span>
               <Input
                 autoFocus
                 inputMode="decimal"
-                className="h-16 pl-10 text-3xl font-bold"
+                className="h-14 pl-10 text-2xl sm:text-3xl font-bold"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))}
                 placeholder="0"
               />
             </div>
+
+            {/* Quick Settle chips */}
             {canSettle && (
               <div className="flex gap-2">
-                <Button variant="secondary" size="sm" onClick={() => setAmount(String(due))}>
+                <Button variant="secondary" size="sm" className="h-7 text-xs px-2.5" onClick={() => setAmount(String(due))}>
                   Full {inr(due)}
                 </Button>
-                <Button variant="secondary" size="sm" onClick={() => setAmount(String(Math.round(due / 2)))}>
+                <Button variant="secondary" size="sm" className="h-7 text-xs px-2.5" onClick={() => setAmount(String(Math.round(due / 2)))}>
                   Half {inr(Math.round(due / 2))}
                 </Button>
               </div>
             )}
-            <div className="space-y-2">
-              <Label>Bill / receipt photo (optional)</Label>
+
+            {/* Bill / receipt photo section */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Bill / receipt photo (optional)</Label>
               <input
                 ref={fileInput}
                 type="file"
@@ -149,43 +164,65 @@ export function EntrySheet({
                 onChange={(e) => void handleReceipt(e.target.files?.[0])}
               />
               {receipt ? (
-                <div className="relative flex items-center gap-3 rounded-xl border bg-card p-2">
-                  <img src={receipt.previewUrl} alt="Compressed receipt preview" className="h-20 w-20 rounded-lg object-cover" />
-                  <div className="min-w-0 text-sm">
-                    <p className="font-medium">Ready to upload</p>
-                    <p className="text-muted-foreground">{formatBytes(receipt.compressedSize)} · {receipt.savedPercent}% smaller</p>
+                <div className="relative flex items-center gap-3 rounded-xl border bg-card p-2 shadow-xs">
+                  <img src={receipt.previewUrl} alt="Compressed receipt preview" className="h-14 w-14 rounded-lg object-cover shrink-0 border" />
+                  <div className="min-w-0 flex-1 text-xs">
+                    <p className="font-semibold text-foreground">Photo ready to upload</p>
+                    <p className="text-muted-foreground mt-0.5">{formatBytes(receipt.compressedSize)} · {receipt.savedPercent}% smaller</p>
                   </div>
-                  <Button type="button" variant="ghost" size="icon" className="ml-auto shrink-0" onClick={removeReceipt} aria-label="Remove receipt photo">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                    onClick={removeReceipt}
+                    aria-label="Remove receipt photo"
+                  >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               ) : (
-                <Button type="button" variant="outline" className="h-12 w-full justify-start gap-2" onClick={() => fileInput.current?.click()} disabled={compressing}>
-                  <ImagePlus className="h-4 w-4" />
-                  {compressing ? "Compressing photo…" : "Take photo or choose image"}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 w-full justify-start gap-2 text-xs sm:text-sm"
+                  onClick={() => fileInput.current?.click()}
+                  disabled={compressing}
+                >
+                  <ImagePlus className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="truncate">{compressing ? "Compressing photo…" : "Take photo or choose image"}</span>
                 </Button>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="edate">Date</Label>
-                <Input id="edate" type="date" className="h-12" value={date} max={today()} onChange={(e) => setDate(e.target.value)} />
+
+            {/* Date & Note side by side */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="space-y-1">
+                <Label htmlFor="edate" className="text-xs text-muted-foreground">Date</Label>
+                <Input id="edate" type="date" className="h-11 text-xs sm:text-sm" value={date} max={today()} onChange={(e) => setDate(e.target.value)} />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="enote">Note</Label>
-                <Input id="enote" className="h-12" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Bill no, items…" />
+              <div className="space-y-1">
+                <Label htmlFor="enote" className="text-xs text-muted-foreground">Note</Label>
+                <Input id="enote" className="h-11 text-xs sm:text-sm" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Bill no, items…" />
               </div>
             </div>
+          </div>
+
+          {/* Sticky Pinned Footer with Save button */}
+          <div className="shrink-0 border-t bg-background/95 backdrop-blur-xs px-4 pt-2.5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-2">
             {amt > 0 && (
-              <p className="text-sm text-muted-foreground">
-                New balance:{" "}
+              <div className="flex items-center justify-between text-xs text-muted-foreground px-0.5">
+                <span>New balance:</span>
                 <span className={cn("font-semibold", projected > 0 ? "text-gain" : projected < 0 ? "text-loss" : "")}>
                   {inr(projected)} {projected > 0 ? "you'll get" : projected < 0 ? "you'll give" : "settled"}
                 </span>
-              </p>
+              </div>
             )}
             <Button
-              className={cn("w-full h-12 text-base", isGot ? "bg-gain hover:bg-gain/90 text-gain-foreground" : "bg-loss hover:bg-loss/90 text-loss-foreground")}
+              className={cn(
+                "w-full h-12 text-base font-semibold shadow-sm",
+                isGot ? "bg-gain hover:bg-gain/90 text-gain-foreground" : "bg-loss hover:bg-loss/90 text-loss-foreground"
+              )}
               onClick={save}
               disabled={saving || compressing}
             >
