@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, FileDown, MessageCircle, Phone, Share2, Trash2 } from "lucide-react";
+import { ArrowLeft, FileDown, MessageCircle, Phone, Share2, Trash2, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,6 +19,7 @@ import { balanceText, labels, receiptMessage, useEntries, useParty, useProfile, 
 import { fmtDate, fmtTime, inr, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { downloadStatement, type Range } from "@/lib/pdf";
+import { Dialog as ImageDialog, DialogContent as ImageDialogContent } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/party/$id")({
   head: () => ({
@@ -50,6 +51,7 @@ function PartyPage() {
   const [del, setDel] = useState<Entry | "party" | null>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
   const [range, setRange] = useState<Range>({});
+  const [imageToView, setImageToView] = useState<string | null>(null);
   const qc = useQueryClient();
   const navigate = useNavigate();
 
@@ -72,21 +74,7 @@ function PartyPage() {
 
   const l = labels(party.kind);
   const business = profile?.business_name;
-  const upiId =
-    (profile as Record<string, any> | undefined)?.["upi_id"] ||
-    (typeof window !== "undefined" ? localStorage.getItem("lenadena_upi_id") : null);
-  const reminder = receiptMessage({ business, party, balance: party.balance, upiId });
-
-  const savePdf = async (r: Range) => {
-    setPdfOpen(false);
-    await downloadStatement(
-      party,
-      entries ?? [],
-      business,
-      r,
-      upiId ? { id: upiId, name: business || profile?.owner_name || undefined } : undefined
-    );
-  };
+  const reminder = receiptMessage({ business, party, balance: party.balance });
 
   const confirmDelete = async () => {
     if (!del) return;
@@ -104,6 +92,25 @@ function PartyPage() {
       toast.success("Entry deleted");
     }
     setDel(null);
+  };
+
+  const viewReceipt = async (path: string) => {
+    const { data, error } = await supabase.storage.from("receipts").createSignedUrl(path, 5 * 60);
+    if (error || !data?.signedUrl) {
+      toast.error(error?.message ?? "Could not open receipt photo");
+      return;
+    }
+    setImageToView(data.signedUrl);
+  };
+
+  const savePdf = async (r: Range) => {
+    try {
+      await downloadStatement(party, entries ?? [], business, r);
+      setPdfOpen(false);
+      toast.success("Statement downloaded");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not generate PDF");
+    }
   };
 
   return (
@@ -158,13 +165,23 @@ function PartyPage() {
         {rows.map((e) => (
           <li key={e.id}>
             <button
-              onClick={() => setShare(receiptMessage({ business, party, entry: e, balance: e.running, upiId }))}
+              onClick={() => setShare(receiptMessage({ business, party, entry: e, balance: e.running }))}
               onContextMenu={(ev) => { ev.preventDefault(); if (!party.shared) setDel(e); }}
               className="w-full flex items-center rounded-xl bg-card border px-3 py-3 text-left"
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium">{fmtDate(e.entry_date)} <span className="text-muted-foreground text-xs">{fmtTime(e.entry_date)}</span></p>
                 {e.note && <p className="text-xs text-muted-foreground truncate">{e.note}</p>}
+                {e.bill_path && (
+                  <button
+                    type="button"
+                    className="mt-2 inline-flex items-center gap-2 rounded-md border px-2 py-1 text-xs text-primary"
+                    onClick={(ev) => { ev.stopPropagation(); void viewReceipt(e.bill_path!); }}
+                    aria-label="View receipt photo"
+                  >
+                    <ImageIcon className="h-3.5 w-3.5" /> View bill photo
+                  </button>
+                )}
                 <p className="text-[11px] text-muted-foreground mt-0.5">Bal. {inr(e.running)} {e.running > 0 ? "get" : e.running < 0 ? "give" : ""}</p>
               </div>
               <span className="w-20 text-right font-semibold text-loss">{e.direction === "gave" ? inr(e.amount) : ""}</span>
@@ -202,7 +219,7 @@ function PartyPage() {
         onOpenChange={(o) => !o && setDir(null)}
         party={party}
         direction={dir ?? "got"}
-        onSaved={(entry, bal) => setShare(receiptMessage({ business, party, entry, balance: bal, upiId }))}
+        onSaved={(entry, bal) => setShare(receiptMessage({ business, party, entry, balance: bal }))}
       />
       <ShareDialog open={!!share} onOpenChange={(o) => !o && setShare(null)} text={share ?? ""} phone={party.phone} title="Share receipt" />
 
@@ -221,46 +238,30 @@ function PartyPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <ImageDialog open={!!imageToView} onOpenChange={(open) => !open && setImageToView(null)}>
+        <ImageDialogContent className="max-w-3xl p-2">
+          {imageToView && <img src={imageToView} alt="Bill or receipt" className="max-h-[85vh] w-full rounded-md object-contain" />}
+        </ImageDialogContent>
+      </ImageDialog>
       <Dialog open={pdfOpen} onOpenChange={setPdfOpen}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-sm rounded-2xl p-5">
-          <DialogHeader>
-            <DialogTitle className="text-lg">Download statement</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-2 pt-1">
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Download statement</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 gap-2">
             {([
               ["All time", {}],
               ["This month", monthRange(0)],
               ["Last month", monthRange(-1)],
               ["Last 30 days", { from: iso(addDays(new Date(), -29)), to: iso(new Date()) }],
             ] as [string, Range][]).map(([label, r]) => (
-              <Button key={label} variant="outline" size="sm" className="h-10 text-xs" onClick={() => savePdf(r)}>
-                {label}
-              </Button>
+              <Button key={label} variant="outline" onClick={() => savePdf(r)}>{label}</Button>
             ))}
           </div>
-          <div className="space-y-1.5 pt-2">
-            <span className="text-xs text-muted-foreground font-medium">Or select custom period</span>
-            <div className="grid grid-cols-[1fr,auto,1fr] items-center gap-2">
-              <Input
-                type="date"
-                className="h-10 text-xs px-2"
-                value={range.from ?? ""}
-                onChange={(e) => setRange((r) => ({ ...r, from: e.target.value || undefined }))}
-                aria-label="From date"
-              />
-              <span className="text-muted-foreground text-xs font-medium">to</span>
-              <Input
-                type="date"
-                className="h-10 text-xs px-2"
-                value={range.to ?? ""}
-                onChange={(e) => setRange((r) => ({ ...r, to: e.target.value || undefined }))}
-                aria-label="To date"
-              />
-            </div>
+          <div className="flex items-center gap-2">
+            <Input type="date" value={range.from ?? ""} onChange={(e) => setRange((r) => ({ ...r, from: e.target.value || undefined }))} aria-label="From date" />
+            <span className="text-muted-foreground text-sm">to</span>
+            <Input type="date" value={range.to ?? ""} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value || undefined }))} aria-label="To date" />
           </div>
-          <Button className="w-full h-11 text-sm font-semibold mt-1" onClick={() => savePdf(range)}>
-            Download PDF Statement
-          </Button>
+          <Button className="w-full" onClick={() => savePdf(range)}>Download selected period</Button>
         </DialogContent>
       </Dialog>
     </div>
