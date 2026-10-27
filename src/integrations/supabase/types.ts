@@ -24,6 +24,7 @@ export type Database = {
           note: string | null
           party_id: string
           user_id: string
+          bill_path: string | null
         }
         Insert: {
           amount: number
@@ -34,6 +35,7 @@ export type Database = {
           note?: string | null
           party_id: string
           user_id?: string
+          bill_path?: string | null
         }
         Update: {
           amount?: number
@@ -44,6 +46,7 @@ export type Database = {
           note?: string | null
           party_id?: string
           user_id?: string
+          bill_path?: string | null
         }
         Relationships: [
           {
