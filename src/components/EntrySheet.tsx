@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { labels, type Entry, type Party } from "@/lib/ledger";
 import { inr } from "@/lib/format";
 import { compressReceiptImage, formatBytes, uploadReceipt, type CompressResult } from "@/lib/compress";
-import { ImagePlus, X } from "lucide-react";
+import { Camera, Image, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -33,7 +33,8 @@ export function EntrySheet({
   const [saving, setSaving] = useState(false);
   const [compressing, setCompressing] = useState(false);
   const [receipt, setReceipt] = useState<CompressResult | null>(null);
-  const fileInput = useRef<HTMLInputElement>(null);
+  const cameraInput = useRef<HTMLInputElement>(null);
+  const galleryInput = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
   const l = labels(party.kind);
   const isGot = direction === "got";
@@ -73,7 +74,8 @@ export function EntrySheet({
   const removeReceipt = () => {
     if (receipt) URL.revokeObjectURL(receipt.previewUrl);
     setReceipt(null);
-    if (fileInput.current) fileInput.current.value = "";
+    if (cameraInput.current) cameraInput.current.value = "";
+    if (galleryInput.current) galleryInput.current.value = "";
   };
 
   const projected = party.balance + (isGot ? -amt : amt);
@@ -155,14 +157,24 @@ export function EntrySheet({
             {/* Bill / receipt photo section */}
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-muted-foreground">Bill / receipt photo (optional)</Label>
+              {/* Native camera trigger */}
               <input
-                ref={fileInput}
+                ref={cameraInput}
                 type="file"
                 accept="image/*"
                 capture="environment"
                 className="hidden"
                 onChange={(e) => void handleReceipt(e.target.files?.[0])}
               />
+              {/* Native gallery / file picker trigger */}
+              <input
+                ref={galleryInput}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => void handleReceipt(e.target.files?.[0])}
+              />
+
               {receipt ? (
                 <div className="relative flex items-center gap-3 rounded-xl border bg-card p-2 shadow-xs">
                   <img src={receipt.previewUrl} alt="Compressed receipt preview" className="h-14 w-14 rounded-lg object-cover shrink-0 border" />
@@ -182,16 +194,28 @@ export function EntrySheet({
                   </Button>
                 </div>
               ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-11 w-full justify-start gap-2 text-xs sm:text-sm"
-                  onClick={() => fileInput.current?.click()}
-                  disabled={compressing}
-                >
-                  <ImagePlus className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="truncate">{compressing ? "Compressing photo…" : "Take photo or choose image"}</span>
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 justify-center gap-2 text-xs sm:text-sm font-medium"
+                    onClick={() => cameraInput.current?.click()}
+                    disabled={compressing}
+                  >
+                    <Camera className="h-4 w-4 text-primary shrink-0" />
+                    <span>{compressing ? "Processing…" : "Take photo"}</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 justify-center gap-2 text-xs sm:text-sm font-medium"
+                    onClick={() => galleryInput.current?.click()}
+                    disabled={compressing}
+                  >
+                    <Image className="h-4 w-4 text-primary shrink-0" />
+                    <span>{compressing ? "Processing…" : "Choose from gallery"}</span>
+                  </Button>
+                </div>
               )}
             </div>
 
