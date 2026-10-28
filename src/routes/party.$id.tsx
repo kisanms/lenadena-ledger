@@ -52,6 +52,7 @@ function PartyPage() {
   const [pdfOpen, setPdfOpen] = useState(false);
   const [range, setRange] = useState<Range>({});
   const [imageToView, setImageToView] = useState<string | null>(null);
+  const [loadingReceipt, setLoadingReceipt] = useState<string | null>(null);
   const qc = useQueryClient();
   const navigate = useNavigate();
 
@@ -95,12 +96,26 @@ function PartyPage() {
   };
 
   const viewReceipt = async (path: string) => {
-    const { data, error } = await supabase.storage.from("receipts").createSignedUrl(path, 5 * 60);
-    if (error || !data?.signedUrl) {
+    try {
+      setLoadingReceipt(path);
+      // Try signed URL (works for private bucket)
+      const { data, error } = await supabase.storage.from("receipts").createSignedUrl(path, 60 * 60);
+      if (!error && data?.signedUrl) {
+        setImageToView(data.signedUrl);
+        return;
+      }
+      // Fallback to public URL (works when bucket is public)
+      const { data: pub } = supabase.storage.from("receipts").getPublicUrl(path);
+      if (pub?.publicUrl) {
+        setImageToView(pub.publicUrl);
+        return;
+      }
       toast.error(error?.message ?? "Could not open receipt photo");
-      return;
+    } catch (err: any) {
+      toast.error(err?.message ?? "Could not open receipt photo");
+    } finally {
+      setLoadingReceipt(null);
     }
-    setImageToView(data.signedUrl);
   };
 
   const savePdf = async (r: Range) => {
@@ -239,8 +254,27 @@ function PartyPage() {
       </AlertDialog>
 
       <ImageDialog open={!!imageToView} onOpenChange={(open) => !open && setImageToView(null)}>
-        <ImageDialogContent className="max-w-3xl p-2">
-          {imageToView && <img src={imageToView} alt="Bill or receipt" className="max-h-[85vh] w-full rounded-md object-contain" />}
+        <ImageDialogContent className="max-w-md sm:max-w-lg p-4 bg-background">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-base font-semibold flex items-center justify-between">
+              <span>Bill / Receipt Photo</span>
+              {imageToView && (
+                <a
+                  href={imageToView}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-primary underline font-normal"
+                >
+                  Open original
+                </a>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {imageToView && (
+            <div className="rounded-lg overflow-hidden border bg-muted/20 flex items-center justify-center p-1">
+              <img src={imageToView} alt="Bill or receipt" className="max-h-[75vh] w-full rounded-md object-contain" />
+            </div>
+          )}
         </ImageDialogContent>
       </ImageDialog>
       <Dialog open={pdfOpen} onOpenChange={setPdfOpen}>
