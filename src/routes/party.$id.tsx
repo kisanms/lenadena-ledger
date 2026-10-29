@@ -255,21 +255,24 @@ function PartyPage() {
 
       <ImageDialog open={!!imageToView} onOpenChange={(open) => !open && setImageToView(null)}>
         <ImageDialogContent className="max-w-md sm:max-w-lg p-4 bg-background">
-          <DialogHeader className="pb-2">
-            <DialogTitle className="text-base font-semibold flex items-center justify-between">
+
+          <DialogHeader className="pb-2 pr-8">
+            <DialogTitle className="text-base font-semibold flex items-center justify-between gap-3">
               <span>Bill / Receipt Photo</span>
+
               {imageToView && (
                 <a
                   href={imageToView}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs text-primary underline font-normal"
+                  className="shrink-0 text-xs text-primary underline font-normal"
                 >
                   Open original
                 </a>
               )}
             </DialogTitle>
           </DialogHeader>
+
           {imageToView && (
             <div className="rounded-lg overflow-hidden border bg-muted/20 flex items-center justify-center p-1">
               <img src={imageToView} alt="Bill or receipt" className="max-h-[75vh] w-full rounded-md object-contain" />

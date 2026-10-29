@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as ApkRouteImport } from './routes/apk'
 import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PayRouteImport } from './routes/pay'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as PartyIdRouteImport } from './routes/party.$id'
@@ -44,6 +45,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PayRoute = PayRouteImport.update({
+  id: '/pay',
+  path: '/pay',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/apk': typeof ApkRoute
   '/delete-account': typeof DeleteAccountRoute
   '/login': typeof LoginRoute
+  '/pay': typeof PayRoute
   '/settings': typeof SettingsRoute
   '/welcome': typeof WelcomeRoute
   '/party/$id': typeof PartyIdRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/apk': typeof ApkRoute
   '/delete-account': typeof DeleteAccountRoute
   '/login': typeof LoginRoute
+  '/pay': typeof PayRoute
   '/settings': typeof SettingsRoute
   '/welcome': typeof WelcomeRoute
   '/party/$id': typeof PartyIdRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/apk': typeof ApkRoute
   '/delete-account': typeof DeleteAccountRoute
   '/login': typeof LoginRoute
+  '/pay': typeof PayRoute
   '/settings': typeof SettingsRoute
   '/welcome': typeof WelcomeRoute
   '/party/$id': typeof PartyIdRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/apk'
     | '/delete-account'
     | '/login'
+    | '/pay'
     | '/settings'
     | '/welcome'
     | '/party/$id'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/apk'
     | '/delete-account'
     | '/login'
+    | '/pay'
     | '/settings'
     | '/welcome'
     | '/party/$id'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/apk'
     | '/delete-account'
     | '/login'
+    | '/pay'
     | '/settings'
     | '/welcome'
     | '/party/$id'
@@ -141,6 +153,7 @@ export interface RootRouteChildren {
   ApkRoute: typeof ApkRoute
   DeleteAccountRoute: typeof DeleteAccountRoute
   LoginRoute: typeof LoginRoute
+  PayRoute: typeof PayRoute
   SettingsRoute: typeof SettingsRoute
   WelcomeRoute: typeof WelcomeRoute
   PartyIdRoute: typeof PartyIdRoute
@@ -184,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pay': {
+      id: '/pay'
+      path: '/pay'
+      fullPath: '/pay'
+      preLoaderRoute: typeof PayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -221,6 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApkRoute: ApkRoute,
   DeleteAccountRoute: DeleteAccountRoute,
   LoginRoute: LoginRoute,
+  PayRoute: PayRoute,
   SettingsRoute: SettingsRoute,
   WelcomeRoute: WelcomeRoute,
   PartyIdRoute: PartyIdRoute,
