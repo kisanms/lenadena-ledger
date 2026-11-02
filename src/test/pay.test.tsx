@@ -21,7 +21,7 @@ describe("PayPage Component", () => {
 
     render(<RouteModule.PayPage />);
 
-    expect(screen.getByText("Verified Direct Khata Bill")).toBeInTheDocument();
+  expect(screen.getByText("Pay directly using UPI")).toBeInTheDocument();
     expect(screen.getByText("Kisan Kirana")).toBeInTheDocument();
     expect(screen.getByText("majumdarkishan46-1@okicici")).toBeInTheDocument();
     expect(screen.getByText("₹500.00")).toBeInTheDocument();
