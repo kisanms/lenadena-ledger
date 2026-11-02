@@ -12,24 +12,36 @@ import { compressReceiptImage, formatBytes, uploadReceipt, type CompressResult }
 import { Camera, Image, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const today = () => new Date().toISOString().slice(0, 10);
+const localIso = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const today = () => localIso(new Date());
+const plusDays = (n: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return localIso(d);
+};
 
 export function EntrySheet({
   open,
   onOpenChange,
   party,
-  direction,
+  direction: initialDirection,
   onSaved,
+  edit,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   party: Party;
   direction: "gave" | "got";
   onSaved: (e: Entry, newBalance: number) => void;
+  /** When set, the sheet edits this existing entry instead of adding a new one. */
+  edit?: Entry | null;
 }) {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [date, setDate] = useState(today());
+  const [dueDate, setDueDate] = useState("");
+  const [direction, setDirection] = useState(initialDirection);
   const [saving, setSaving] = useState(false);
   const [compressing, setCompressing] = useState(false);
   const [receipt, setReceipt] = useState<CompressResult | null>(null);
@@ -41,15 +53,17 @@ export function EntrySheet({
 
   useEffect(() => {
     if (open) {
-      setAmount("");
-      setNote("");
-      setDate(today());
+      setAmount(edit ? String(edit.amount) : "");
+      setNote(edit?.note ?? "");
+      setDate(edit ? localIso(new Date(edit.entry_date)) : today());
+      setDueDate(edit?.due_date ?? "");
+      setDirection(edit ? edit.direction : initialDirection);
       setReceipt((old) => {
         if (old) URL.revokeObjectURL(old.previewUrl);
         return null;
       });
     }
-  }, [open]);
+  }, [open, edit, initialDirection]);
 
   const amt = Number(amount) || 0;
 
@@ -78,17 +92,21 @@ export function EntrySheet({
     if (galleryInput.current) galleryInput.current.value = "";
   };
 
-  const projected = party.balance + (isGot ? -amt : amt);
-  const due = Math.abs(party.balance);
+  // When editing, remove the old entry's effect before applying the new values.
+  const base = edit ? party.balance - (edit.direction === "gave" ? edit.amount : -edit.amount) : party.balance;
+  const projected = base + (isGot ? -amt : amt);
+  const due = Math.abs(base);
   // Quick "settle full" helper: amount that brings balance to zero in this direction
-  const canSettle = (isGot && party.balance > 0) || (!isGot && party.balance < 0);
+  const canSettle = (isGot && base > 0) || (!isGot && base < 0);
 
   const save = async () => {
     if (amt <= 0) return void toast.error("Enter an amount");
     setSaving(true);
     const isToday = date === today();
-    const entry_date = isToday ? new Date().toISOString() : new Date(date + "T12:00:00").toISOString();
-    let bill_path: string | null = null;
+    const entry_date = edit && date === localIso(new Date(edit.entry_date))
+      ? edit.entry_date
+      : isToday ? new Date().toISOString() : new Date(date + "T12:00:00").toISOString();
+    let bill_path: string | null = edit?.bill_path ?? null;
     try {
       if (receipt) {
         const { data: sessionData } = await supabase.auth.getSession();
@@ -100,17 +118,25 @@ export function EntrySheet({
       setSaving(false);
       return void toast.error(error instanceof Error ? error.message : "Receipt upload failed");
     }
-    const { data, error } = await supabase
-      .from("entries")
-      .insert({ party_id: party.id, direction, amount: amt, note: note.trim() || null, entry_date, bill_path })
-      .select()
-      .single();
+    const fields = {
+      direction,
+      amount: amt,
+      note: note.trim() || null,
+      entry_date,
+      bill_path,
+      due_date: direction === "gave" && dueDate ? dueDate : null,
+    };
+    const { data, error } = edit
+      ? await supabase.from("entries").update(fields).eq("id", edit.id).select().single()
+      : await supabase.from("entries").insert({ party_id: party.id, ...fields }).select().single();
     setSaving(false);
     if (error) return void toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["entries", party.id] });
     qc.invalidateQueries({ queryKey: ["party", party.id] });
     qc.invalidateQueries({ queryKey: ["parties"] });
+    qc.invalidateQueries({ queryKey: ["dues"] });
     onOpenChange(false);
+    if (edit) toast.success("Entry updated");
     void import("@/lib/push").then((m) => m.notifyParty(party.id));
     onSaved({ ...data, amount: Number(data.amount) } as Entry, projected);
   };
@@ -122,9 +148,15 @@ export function EntrySheet({
           {/* Header */}
           <DrawerHeader className="shrink-0 px-4 pt-2 pb-1.5 text-left">
             <DrawerTitle className={cn("font-display text-xl sm:text-2xl font-bold", isGot ? "text-gain" : "text-loss")}>
-              {isGot ? l.got : l.gave} · {party.name}
+              {edit ? "Edit · " : ""}{isGot ? l.got : l.gave} · {party.name}
             </DrawerTitle>
             <p className="text-xs sm:text-sm text-muted-foreground">{isGot ? l.gotHint : l.gaveHint}</p>
+            {edit && (
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <Button type="button" size="sm" variant={!isGot ? "default" : "outline"} className="h-8 text-xs" onClick={() => setDirection("gave")}>{l.gave}</Button>
+                <Button type="button" size="sm" variant={isGot ? "default" : "outline"} className="h-8 text-xs" onClick={() => setDirection("got")}>{l.got}</Button>
+              </div>
+            )}
           </DrawerHeader>
 
           {/* Scrollable Form Body */}
@@ -230,6 +262,40 @@ export function EntrySheet({
                 <Input id="enote" className="h-11 text-xs sm:text-sm" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Bill no, items…" />
               </div>
             </div>
+
+            {/* Payment promise date (only for credit given to a customer) */}
+            {!isGot && party.kind === "customer" && (
+              <div className="space-y-1.5 rounded-xl border border-accent/40 bg-accent/10 p-2.5">
+                <Label className="text-xs font-semibold">Payment promise date — उधार कब मिलेगा? (optional)</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[3, 7, 15].map((n) => (
+                    <Button
+                      key={n}
+                      type="button"
+                      size="sm"
+                      variant={dueDate === plusDays(n) ? "default" : "outline"}
+                      className="h-8 text-xs px-3"
+                      onClick={() => setDueDate(dueDate === plusDays(n) ? "" : plusDays(n))}
+                    >
+                      +{n} days
+                    </Button>
+                  ))}
+                  <Input
+                    type="date"
+                    aria-label="Custom due date"
+                    className="h-8 w-[9.5rem] text-xs"
+                    value={dueDate}
+                    min={today()}
+                    onChange={(e) => setDueDate(e.target.value)}
+                  />
+                  {dueDate && (
+                    <Button type="button" size="sm" variant="ghost" className="h-8 text-xs px-2" onClick={() => setDueDate("")}>
+                      Clear
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sticky Pinned Footer with Save button */}
@@ -250,7 +316,7 @@ export function EntrySheet({
               onClick={save}
               disabled={saving || compressing}
             >
-              {saving ? "Saving…" : "Save entry"}
+              {saving ? "Saving…" : edit ? "Update entry" : "Save entry"}
             </Button>
           </div>
         </div>

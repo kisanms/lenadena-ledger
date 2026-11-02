@@ -25,11 +25,44 @@ export type Entry = {
   amount: number;
   note: string | null;
   entry_date: string;
+  due_date?: string | null;
+  bill_path?: string | null;
+  user_id?: string;
 };
 
 async function myId() {
   const { data } = await supabase.auth.getSession();
   return data.session?.user.id;
+}
+
+/** Whole days from today until the due date (negative = overdue). */
+export function daysUntil(due: string) {
+  const [y, m, d] = due.split("-").map(Number);
+  const t = new Date();
+  const a = Date.UTC(y!, m! - 1, d!);
+  const b = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+  return Math.round((a - b) / 86400000);
+}
+
+export const fmtDue = (due: string) =>
+  new Date(due + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+
+/** Latest promised due date per party (only from credit entries). Only meaningful when balance > 0. */
+export function useDues() {
+  return useQuery({
+    queryKey: ["dues"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("party_id, due_date, entry_date")
+        .not("due_date", "is", null)
+        .order("entry_date", { ascending: false });
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      for (const r of data ?? []) if (!map[r.party_id] && r.due_date) map[r.party_id] = r.due_date;
+      return map;
+    },
+  });
 }
 
 type PartyRow = Omit<Party, "balance" | "kind"> & { balance: number | string; kind: string; owner_label?: string | null };
@@ -202,11 +235,22 @@ export function receiptMessage(opts: {
   lang?: LangCode;
   /** Shopkeeper's UPI ID, e.g. shop@okaxis. If valid, a pay link is added when balance is due. */
   upiId?: string | null | undefined;
+  /** Promised payment date (YYYY-MM-DD); adds a polite due/overdue line when balance is due. */
+  dueDate?: string | null | undefined;
 }) {
-  const { business, party, entry, balance, upiId } = opts;
+  const { business, party, entry, balance, upiId, dueDate } = opts;
   const currentLang = opts.lang || getActiveLang();
   const r = (n: number) => "₹" + Math.abs(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
-  const lines = [`*${business || "LenaDena"}* 🧾`, `Namaste ${party.name},`, ""];
+  const lines = [`*${business || "LenaDena"}* 🧾`, `Namaste ${party.name} ji,`, ""];
+  if (!entry && dueDate && balance > 0) {
+    const late = daysUntil(dueDate) < 0;
+    lines.push(
+      late
+        ? `LenaDena par aapka *${r(balance)}* ka hisaab *${fmtDue(dueDate)}* tak due tha. Kripya jald bhugtan karein 🙏`
+        : `Aapka *${r(balance)}* ka bhugtan *${fmtDue(dueDate)}* tak due hai 🙏`,
+      "",
+    );
+  }
   if (entry) {
     const d = new Date(entry.entry_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
     let what = "";

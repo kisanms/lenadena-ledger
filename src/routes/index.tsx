@@ -8,7 +8,8 @@ import { AddPartyDialog } from "@/components/AddPartyDialog";
 import { InstallBanner } from "@/components/InstallBanner";
 import { NotificationBell } from "@/components/NotificationBell";
 import { NotifyPrompt } from "@/components/NotifyPrompt";
-import { useParties, useProfile, balanceText, type PartyKind } from "@/lib/ledger";
+import { useParties, useProfile, useDues, balanceText, type PartyKind } from "@/lib/ledger";
+import { DueBadge } from "@/components/DueBadge";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { inr, initials, fmtDate, formatPhone, normalizePhone } from "@/lib/format";
@@ -31,6 +32,7 @@ function Dashboard() {
   const { t, lang } = useI18n();
   const { data: profile } = useProfile(session?.user.id);
   const { data: parties, isLoading } = useParties();
+  const { data: dues } = useDues();
   const [tab, setTab] = useState<PartyKind>("customer");
   const [q, setQ] = useState("");
   const [adding, setAdding] = useState(false);
@@ -203,6 +205,7 @@ function Dashboard() {
                 <p className="text-xs text-muted-foreground">
                   {p.phone ? `${formatPhone(p.phone)} · ` : ""}{fmtDate(p.last_activity)}
                 </p>
+                {!p.shared && <DueBadge due={dues?.[p.id]} balance={p.balance} className="mt-1" />}
               </div>
               <div className="text-right">
                 <p className={cn("font-bold", p.balance > 0 ? "text-gain" : p.balance < 0 ? "text-loss" : "text-muted-foreground")}>
