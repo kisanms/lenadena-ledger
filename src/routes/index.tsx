@@ -116,7 +116,7 @@ function Dashboard() {
       <header className="bg-primary text-primary-foreground px-5 pt-6 pb-20 rounded-b-[2rem]">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs opacity-75">Namaste 🙏</p>
+            <p className="text-xs opacity-75">{t("greeting_namaste", "Namaste 🙏")}</p>
             <h1 className="text-2xl font-bold">{profile?.business_name || "My Business"}</h1>
           </div>
           <div className="flex gap-2">
