@@ -17,6 +17,7 @@ export type Database = {
       entries: {
         Row: {
           amount: number
+          bill_path: string | null
           created_at: string
           direction: string
           entry_date: string
@@ -24,10 +25,10 @@ export type Database = {
           note: string | null
           party_id: string
           user_id: string
-          bill_path: string | null
         }
         Insert: {
           amount: number
+          bill_path?: string | null
           created_at?: string
           direction: string
           entry_date?: string
@@ -35,10 +36,10 @@ export type Database = {
           note?: string | null
           party_id: string
           user_id?: string
-          bill_path?: string | null
         }
         Update: {
           amount?: number
+          bill_path?: string | null
           created_at?: string
           direction?: string
           entry_date?: string
@@ -46,7 +47,6 @@ export type Database = {
           note?: string | null
           party_id?: string
           user_id?: string
-          bill_path?: string | null
         }
         Relationships: [
           {
@@ -113,6 +113,7 @@ export type Database = {
           phone: string | null
           phone_norm: string | null
           updated_at: string
+          upi_id: string | null
         }
         Insert: {
           business_name?: string | null
@@ -123,6 +124,7 @@ export type Database = {
           phone?: string | null
           phone_norm?: string | null
           updated_at?: string
+          upi_id?: string | null
         }
         Update: {
           business_name?: string | null
@@ -133,6 +135,7 @@ export type Database = {
           phone?: string | null
           phone_norm?: string | null
           updated_at?: string
+          upi_id?: string | null
         }
         Relationships: []
       }
@@ -175,22 +178,59 @@ export type Database = {
         }
         Relationships: []
       }
+      recovery_questions: {
+        Row: {
+          answer_hash: string
+          fails: number
+          locked_until: string | null
+          question: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          answer_hash: string
+          fails?: number
+          locked_until?: string | null
+          question: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          answer_hash?: string
+          fails?: number
+          locked_until?: string | null
+          question?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       delete_user_account: { Args: never; Returns: undefined }
+      get_security_question: { Args: { _id: string }; Returns: string }
       has_recovery_pin: { Args: never; Returns: boolean }
+      has_security_question: { Args: never; Returns: Json }
       login_email_for_phone: { Args: { _phone: string }; Returns: string }
       norm_phone: { Args: { p: string }; Returns: string }
       phone_taken: { Args: { _phone: string }; Returns: boolean }
       push_targets: { Args: { _party: string }; Returns: string[] }
+      reset_password_with_answer: {
+        Args: { _answer: string; _id: string; _password: string }
+        Returns: Json
+      }
       reset_password_with_pin: {
         Args: { _id: string; _password: string; _pin: string }
         Returns: Json
       }
       set_recovery_pin: { Args: { _pin: string }; Returns: undefined }
+      set_security_question: {
+        Args: { _answer: string; _question: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
