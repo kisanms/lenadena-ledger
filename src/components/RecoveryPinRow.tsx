@@ -15,7 +15,9 @@ export function RecoveryPinRow() {
   const { lang } = useI18n();
   const [status, setStatus] = useState<{ has: boolean; question: string | null } | null>(null);
   const [open, setOpen] = useState(false);
-  const [question, setQuestion] = useState<string>(SECURITY_QUESTION_LIST[0].id);
+  const [question, setQuestion] = useState<string>(
+    SECURITY_QUESTION_LIST[0]?.id ?? "fav_animal"
+  );
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
 
