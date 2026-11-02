@@ -93,7 +93,7 @@ export const translations = {
     hi: "सप्लायर जोड़ें",
     hinglish: "Supplier Add Karein",
     gu: "સપ્લાયર ઉમેરો",
-    mr: "सप्लायर जोडा",
+    mr: "સપ્લાયર જોડા",
   },
   no_customers_yet: {
     en: "No customers yet",
@@ -107,7 +107,7 @@ export const translations = {
     hi: "अभी कोई सप्लायर नहीं है",
     hinglish: "Abhi koi supplier nahi hai",
     gu: "હજુ સુધી કોઈ સપ્લાયર નથી",
-    mr: "अजून कोणतेही सप्लायर नाहीत",
+    mr: "अजून कोणतेही सપ્લાયર્સ नाहीत",
   },
   add_first_party_hint: {
     en: "Add your first party to start tracking udhaar and payments.",
@@ -115,6 +115,36 @@ export const translations = {
     hinglish: "Udhaar aur payment track karne ke liye pehli party add karein.",
     gu: "ઉધાર અને ચુકવણી ટ્રેક કરવા માટે પ્રથમ પાર્ટી ઉમેરો.",
     mr: "उधार आणि पेमेंट नोंदवण्यासाठी पहिली पार्टी जोडा.",
+  },
+
+  // Greetings & Subtitles
+  greeting_namaste: {
+    en: "Namaste 🙏",
+    hi: "नमस्ते 🙏",
+    hinglish: "Namaste 🙏",
+    gu: "નમસ્તે 🙏",
+    mr: "नमस्ते 🙏",
+  },
+  customer_label: {
+    en: "Customer",
+    hi: "ग्राहक",
+    hinglish: "Customer",
+    gu: "ગ્રાહક",
+    mr: "ग्राहक",
+  },
+  supplier_label: {
+    en: "Supplier",
+    hi: "सप्लायर",
+    hinglish: "Supplier",
+    gu: "સપ્લાયર",
+    mr: "सપ્લાયર",
+  },
+  no_contact: {
+    en: "No contact",
+    hi: "कोई संपर्क नहीं",
+    hinglish: "No contact",
+    gu: "કોઈ સંપર્ક નથી",
+    mr: "कोणताही संपर्क नाही",
   },
 
   // Party detail screen
@@ -153,12 +183,19 @@ export const translations = {
     gu: "નોંધો",
     mr: "नोंदी",
   },
+  entry_col: {
+    en: "Entry",
+    hi: "लेनदेन",
+    hinglish: "Entry",
+    gu: "નોંધ",
+    mr: "नोंद",
+  },
   no_entries_yet: {
-    en: "No entries yet",
-    hi: "अभी कोई लेनदेन नहीं है",
-    hinglish: "Abhi koi entry nahi hai",
-    gu: "હજુ સુધી કોઈ નોંધ નથી",
-    mr: "अजून कोणतीही नोंद नाही",
+    en: "No entries yet. Add the first one below.",
+    hi: "अभी कोई लेनदेन नहीं है। नीचे पहली एंट्री जोड़ें।",
+    hinglish: "Abhi koi entry nahi hai. Pehli entry add karein.",
+    gu: "હજુ સુધી કોઈ નોંધ નથી. નીચે પ્રથમ નોંધ ઉમેરો.",
+    mr: "अजून कोणतीही नोंद नाही. खाली पहिली नोंद जोडा.",
   },
   opening_balance: {
     en: "Opening balance",
@@ -196,6 +233,64 @@ export const translations = {
     hinglish: "Aapne Pay Kiye",
     gu: "તમે ચૂકવ્યા",
     mr: "तुम्ही दिले",
+  },
+
+  // Balances & Promises
+  bal_abbr: {
+    en: "Bal.",
+    hi: "बाकी",
+    hinglish: "Bal.",
+    gu: "બાકી",
+    mr: "बाकी",
+  },
+  get_action: {
+    en: "get",
+    hi: "लेंगे",
+    hinglish: "milenge",
+    gu: "મળશે",
+    mr: "येणे",
+  },
+  give_action: {
+    en: "give",
+    hi: "देंगे",
+    hinglish: "denge",
+    gu: "આપવાના",
+    mr: "देणे",
+  },
+  promised_by: {
+    en: "Promised by",
+    hi: "वादा तारीख:",
+    hinglish: "Promised by",
+    gu: "ચુકવણી તારીખ:",
+    mr: "दिलेली तारीख:",
+  },
+  due_today: {
+    en: "Due today",
+    hi: "आज ही बाकी",
+    hinglish: "Aaj hi due",
+    gu: "આજે જ બાકી",
+    mr: "आजच देय",
+  },
+  view_bill_photo: {
+    en: "View bill photo",
+    hi: "बिल फोटो देखें",
+    hinglish: "Bill photo dekhein",
+    gu: "બિલ ફોટો જુઓ",
+    mr: "बिल फोटो पहा",
+  },
+  shared_by_prefix: {
+    en: "Shared by",
+    hi: "द्वारा साझा किया गया",
+    hinglish: "Shared by",
+    gu: "દ્વારા શેર કરેલ",
+    mr: "द्वारे शेअर केलेले",
+  },
+  updates_live: {
+    en: "updates live",
+    hi: "लाइव अपडेट",
+    hinglish: "updates live",
+    gu: "લાઇવ અપડેટ",
+    mr: "लाइव्ह अपडेट",
   },
 
   // Entry Sheet
@@ -332,7 +427,7 @@ export const translations = {
     hi: "पिन बदलें",
     hinglish: "PIN badlein",
     gu: "પિન બદલો",
-    mr: "पिन बदला",
+    mr: "પિન બદલા",
   },
   share_app: {
     en: "Share LenaDena App",
@@ -346,7 +441,7 @@ export const translations = {
     hi: "ग्राहकों और सप्लायरों को APK लिंक भेजें",
     hinglish: "Customers aur suppliers ko APK link share karein",
     gu: "ગ્રાહકો અને સપ્લાયર્સ સાથે APK લિંક શેર કરો",
-    mr: "ग्राहक आणि सप्लायर्सना APK लिंक शेअर करा",
+    mr: "ग्राहक आणि सપ્લાયર્સના APK लिंक शेअर करा",
   },
   share_app_btn: {
     en: "Share App Link",
@@ -389,7 +484,7 @@ export const translations = {
     hi: "पिन की पुष्टि करें",
     hinglish: "PIN Confirm Karein",
     gu: "પિન કન્ફર્મ કરો",
-    mr: "पिन निश्चित करा",
+    mr: "પિન નિશ્ચિત करा",
   },
   create_pin: {
     en: "Create a 4-digit PIN",
@@ -403,14 +498,14 @@ export const translations = {
     hi: "पिन सेट हो गया",
     hinglish: "PIN set ho gaya",
     gu: "પિન સેટ થઈ ગયો",
-    mr: "पिन सेट झाला",
+    mr: "પિન સેટ झाला",
   },
   pin_mismatch: {
     en: "PINs did not match, try again",
     hi: "पिन मेल नहीं खाया, पुनः प्रयास करें",
     hinglish: "PIN match nahi hua, dobara try karein",
     gu: "પિન મેળ ખાતો નથી, ફરી પ્રયાસ કરો",
-    mr: "पिन जुळला नाही, पुन्हा प्रयत्न करा",
+    mr: "પિન जुळला नाही, पुन्हा प्रयत्न करा",
   },
 
   // Common Dialogs & Actions
