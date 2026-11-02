@@ -167,6 +167,9 @@ function PartyPage() {
               <Phone className="h-5 w-5" />
             </a>
           )}
+          {!party.shared && <button onClick={openEditParty} className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Edit details">
+            <Pencil className="h-5 w-5" />
+          </button>}
           {!party.shared && <button onClick={() => setDel("party")} className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Delete party">
             <Trash2 className="h-5 w-5" />
           </button>}
@@ -177,6 +180,7 @@ function PartyPage() {
             <p className={cn("text-3xl font-extrabold font-display", party.balance > 0 ? "text-gain" : party.balance < 0 ? "text-loss" : "")}>
               {inr(party.balance)}
             </p>
+            <DueBadge due={dueDate} balance={party.balance} className="mt-1" />
           </div>
           <div className="flex gap-2">
             <Button size="icon" className="h-11 w-11 rounded-full bg-whatsapp hover:bg-whatsapp/90 text-gain-foreground" onClick={() => shareWhatsApp(party.phone, reminder)} aria-label="WhatsApp reminder">
@@ -209,6 +213,7 @@ function PartyPage() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium">{fmtDate(e.entry_date)} <span className="text-muted-foreground text-xs">{fmtTime(e.entry_date)}</span></p>
                 {e.note && <p className="text-xs text-muted-foreground truncate">{e.note}</p>}
+                {e.due_date && e.direction === "gave" && <p className="text-[11px] text-accent-foreground">Promised by {fmtDate(e.due_date)}</p>}
                 {e.bill_path && (
                   <button
                     type="button"
@@ -223,13 +228,23 @@ function PartyPage() {
               </div>
               <span className="w-20 text-right font-semibold text-loss">{e.direction === "gave" ? inr(e.amount) : ""}</span>
               <span className="w-20 text-right font-semibold text-gain">{e.direction === "got" ? inr(e.amount) : ""}</span>
-              {!party.shared && <span
-                role="button"
-                aria-label="Delete entry"
-                className="ml-2 p-1 text-muted-foreground"
-                onClick={(ev) => { ev.stopPropagation(); setDel(e); }}
-              >
-                <Trash2 className="h-4 w-4" />
+              {!party.shared && <span className="ml-1 flex flex-col gap-1">
+                <span
+                  role="button"
+                  aria-label="Edit entry"
+                  className="p-1 text-primary"
+                  onClick={(ev) => { ev.stopPropagation(); setEditEntry(e); }}
+                >
+                  <Pencil className="h-4 w-4" />
+                </span>
+                <span
+                  role="button"
+                  aria-label="Delete entry"
+                  className="p-1 text-muted-foreground"
+                  onClick={(ev) => { ev.stopPropagation(); setDel(e); }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </span>
               </span>}
             </button>
           </li>
@@ -252,12 +267,25 @@ function PartyPage() {
       </div>}
 
       <EntrySheet
-        open={!!dir}
-        onOpenChange={(o) => !o && setDir(null)}
+        open={!!dir || !!editEntry}
+        onOpenChange={(o) => { if (!o) { setDir(null); setEditEntry(null); } }}
         party={party}
-        direction={dir ?? "got"}
-        onSaved={(entry, bal) => setShare(receiptMessage({ business, party, entry, balance: bal }))}
+        direction={editEntry?.direction ?? dir ?? "got"}
+        edit={editEntry}
+        onSaved={(entry, bal) => { if (!editEntry) setShare(receiptMessage({ business, party, entry, balance: bal })); }}
       />
+      <Dialog open={editParty} onOpenChange={setEditParty}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Edit {party.kind} details</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1"><Label htmlFor="pf-name">Name</Label><Input id="pf-name" value={pf.name} onChange={(e) => setPf({ ...pf, name: e.target.value })} /></div>
+            <div className="space-y-1"><Label htmlFor="pf-phone">Mobile</Label><Input id="pf-phone" inputMode="tel" value={pf.phone} onChange={(e) => setPf({ ...pf, phone: e.target.value })} /></div>
+            <div className="space-y-1"><Label htmlFor="pf-email">Email</Label><Input id="pf-email" type="email" value={pf.email} onChange={(e) => setPf({ ...pf, email: e.target.value })} /></div>
+            <div className="space-y-1"><Label htmlFor="pf-note">Note</Label><Input id="pf-note" value={pf.note} onChange={(e) => setPf({ ...pf, note: e.target.value })} /></div>
+            <Button className="w-full" onClick={saveParty}>Save changes</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       <ShareDialog open={!!share} onOpenChange={(o) => !o && setShare(null)} text={share ?? ""} phone={party.phone} title="Share receipt" />
 
       <AlertDialog open={!!del} onOpenChange={(o) => !o && setDel(null)}>
