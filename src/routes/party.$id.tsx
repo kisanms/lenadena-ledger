@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, FileDown, MessageCircle, Phone, Share2, Trash2, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, FileDown, MessageCircle, Phone, Share2, Trash2, Pencil, Image as ImageIcon } from "lucide-react";
+import { DueBadge } from "@/components/DueBadge";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,6 +57,9 @@ function PartyPage() {
   const [loadingReceipt, setLoadingReceipt] = useState<string | null>(null);
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const [editEntry, setEditEntry] = useState<Entry | null>(null);
+  const [editParty, setEditParty] = useState(false);
+  const [pf, setPf] = useState({ name: "", phone: "", email: "", note: "" });
 
   const rows = useMemo(() => {
     let run = 0;
@@ -75,7 +80,24 @@ function PartyPage() {
 
   const l = labels(party.kind);
   const business = profile?.business_name;
-  const reminder = receiptMessage({ business, party, balance: party.balance });
+  const dueDate = [...(entries ?? [])].reverse().find((e) => e.due_date)?.due_date ?? null;
+  const reminder = receiptMessage({ business, party, balance: party.balance, upiId: profile?.upi_id, dueDate });
+
+  const openEditParty = () => {
+    setPf({ name: party.name, phone: party.phone ?? "", email: party.email ?? "", note: party.note ?? "" });
+    setEditParty(true);
+  };
+  const saveParty = async () => {
+    if (!pf.name.trim()) return void toast.error("Enter a name");
+    const { error } = await supabase.from("parties").update({
+      name: pf.name.trim(), phone: pf.phone.trim() || null, email: pf.email.trim() || null, note: pf.note.trim() || null,
+    }).eq("id", party.id);
+    if (error) return void toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["party", party.id] });
+    qc.invalidateQueries({ queryKey: ["parties"] });
+    setEditParty(false);
+    toast.success("Details updated");
+  };
 
   const confirmDelete = async () => {
     if (!del) return;
