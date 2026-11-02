@@ -22,6 +22,7 @@ import { fmtDate, fmtTime, inr, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { downloadStatement, type Range } from "@/lib/pdf";
 import { Dialog as ImageDialog, DialogContent as ImageDialogContent } from "@/components/ui/dialog";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/party/$id")({
   head: () => ({
@@ -45,6 +46,7 @@ const monthRange = (offset: number): Range => {
 function PartyPage() {
   const { id } = Route.useParams();
   const { session } = useAuth();
+  const { t } = useI18n();
   const { data: profile } = useProfile(session?.user.id);
   const { data: party, isLoading } = useParty(id);
   const { data: entries } = useEntries(id);
@@ -120,13 +122,11 @@ function PartyPage() {
   const viewReceipt = async (path: string) => {
     try {
       setLoadingReceipt(path);
-      // Try signed URL (works for private bucket)
       const { data, error } = await supabase.storage.from("receipts").createSignedUrl(path, 60 * 60);
       if (!error && data?.signedUrl) {
         setImageToView(data.signedUrl);
         return;
       }
-      // Fallback to public URL (works when bucket is public)
       const { data: pub } = supabase.storage.from("receipts").getPublicUrl(path);
       if (pub?.publicUrl) {
         setImageToView(pub.publicUrl);
@@ -150,6 +150,8 @@ function PartyPage() {
     }
   };
 
+  const kindLabel = party.kind === "customer" ? t("customer_label", "Customer") : t("supplier_label", "Supplier");
+
   return (
     <div className="min-h-dvh max-w-md mx-auto pb-32">
       <header className="bg-primary text-primary-foreground px-4 pt-5 pb-6 rounded-b-[2rem]">
@@ -160,7 +162,7 @@ function PartyPage() {
           <span className="grid place-items-center h-10 w-10 rounded-full bg-accent text-accent-foreground font-semibold">{initials(party.name)}</span>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold truncate">{party.name}</h1>
-            <p className="text-xs opacity-75 capitalize">{party.kind}{party.phone ? ` · ${party.phone}` : ""}</p>
+            <p className="text-xs opacity-75 capitalize">{kindLabel}{party.phone ? ` · ${party.phone}` : ""}</p>
           </div>
           {party.phone && (
             <a href={`tel:${party.phone}`} className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Call">
@@ -196,13 +198,13 @@ function PartyPage() {
         </div>
       </header>
 
-      <div className="px-4 mt-4 flex text-[11px] uppercase tracking-wide text-muted-foreground">
-        <span className="flex-1">Entry</span>
+      <div className="px-4 mt-4 flex text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
+        <span className="flex-1">{t("entry_col", "Entry")}</span>
         <span className="w-20 text-right">{l.gave}</span>
         <span className="w-20 text-right">{l.got}</span>
       </div>
       <ul className="mt-1 px-2 space-y-1.5">
-        {rows.length === 0 && <li className="text-center text-muted-foreground py-12">No entries yet. Add the first one below.</li>}
+        {rows.length === 0 && <li className="text-center text-muted-foreground py-12">{t("no_entries_yet", "No entries yet. Add the first one below.")}</li>}
         {rows.map((e) => (
           <li key={e.id}>
             <button
@@ -213,7 +215,11 @@ function PartyPage() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium">{fmtDate(e.entry_date)} <span className="text-muted-foreground text-xs">{fmtTime(e.entry_date)}</span></p>
                 {e.note && <p className="text-xs text-muted-foreground truncate">{e.note}</p>}
-                {e.due_date && e.direction === "gave" && <p className="text-[11px] text-accent-foreground">Promised by {fmtDate(e.due_date)}</p>}
+                {e.due_date && e.direction === "gave" && (
+                  <p className="text-[11px] font-medium text-amber-800 dark:text-amber-300 mt-0.5">
+                    ⏱ {t("promised_by", "Promised by")} {fmtDate(e.due_date)}
+                  </p>
+                )}
                 {e.bill_path && (
                   <button
                     type="button"
@@ -221,10 +227,12 @@ function PartyPage() {
                     onClick={(ev) => { ev.stopPropagation(); void viewReceipt(e.bill_path!); }}
                     aria-label="View receipt photo"
                   >
-                    <ImageIcon className="h-3.5 w-3.5" /> View bill photo
+                    <ImageIcon className="h-3.5 w-3.5" /> {loadingReceipt === e.bill_path ? "Loading..." : t("view_bill_photo", "View bill photo")}
                   </button>
                 )}
-                <p className="text-[11px] text-muted-foreground mt-0.5">Bal. {inr(e.running)} {e.running > 0 ? "get" : e.running < 0 ? "give" : ""}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {t("bal_abbr", "Bal.")} {inr(Math.abs(e.running))} {e.running > 0 ? t("get_action", "get") : e.running < 0 ? t("give_action", "give") : ""}
+                </p>
               </div>
               <span className="w-20 text-right font-semibold text-loss">{e.direction === "gave" ? inr(e.amount) : ""}</span>
               <span className="w-20 text-right font-semibold text-gain">{e.direction === "got" ? inr(e.amount) : ""}</span>
@@ -253,7 +261,7 @@ function PartyPage() {
 
       {party.shared ? (
         <p className="fixed bottom-0 inset-x-0 bg-secondary text-center text-sm text-muted-foreground p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          Shared by {party.name} · updates live
+          {t("shared_by_prefix", "Shared by")} {party.name} · {t("updates_live", "updates live")}
         </p>
       ) : <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t">
         <div className="max-w-md mx-auto grid grid-cols-2 gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
@@ -276,13 +284,13 @@ function PartyPage() {
       />
       <Dialog open={editParty} onOpenChange={setEditParty}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Edit {party.kind} details</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Edit {kindLabel} details</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1"><Label htmlFor="pf-name">Name</Label><Input id="pf-name" value={pf.name} onChange={(e) => setPf({ ...pf, name: e.target.value })} /></div>
             <div className="space-y-1"><Label htmlFor="pf-phone">Mobile</Label><Input id="pf-phone" inputMode="tel" value={pf.phone} onChange={(e) => setPf({ ...pf, phone: e.target.value })} /></div>
             <div className="space-y-1"><Label htmlFor="pf-email">Email</Label><Input id="pf-email" type="email" value={pf.email} onChange={(e) => setPf({ ...pf, email: e.target.value })} /></div>
             <div className="space-y-1"><Label htmlFor="pf-note">Note</Label><Input id="pf-note" value={pf.note} onChange={(e) => setPf({ ...pf, note: e.target.value })} /></div>
-            <Button className="w-full" onClick={saveParty}>Save changes</Button>
+            <Button className="w-full" onClick={saveParty}>{t("save", "Save")}</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -297,7 +305,7 @@ function PartyPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("cancel", "Cancel")}</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={confirmDelete}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -305,11 +313,9 @@ function PartyPage() {
 
       <ImageDialog open={!!imageToView} onOpenChange={(open) => !open && setImageToView(null)}>
         <ImageDialogContent className="max-w-md sm:max-w-lg p-4 bg-background">
-
           <DialogHeader className="pb-2 pr-8">
             <DialogTitle className="text-base font-semibold flex items-center justify-between gap-3">
               <span>Bill / Receipt Photo</span>
-
               {imageToView && (
                 <a
                   href={imageToView}
@@ -332,7 +338,7 @@ function PartyPage() {
       </ImageDialog>
       <Dialog open={pdfOpen} onOpenChange={setPdfOpen}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Download statement</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("download_statement", "Download statement")}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-2">
             {([
               ["All time", {}],
