@@ -2,7 +2,7 @@ import { daysUntil, fmtDue } from "@/lib/ledger";
 import { cn } from "@/lib/utils";
 
 /** Shows "Overdue by X days" / "Due in X days" for a party that still owes money. */
-export function DueBadge({ due, balance, className }: { due?: string | null; balance: number; className?: string }) {
+export function DueBadge({ due, balance, className }: { due?: string | null | undefined; balance: number; className?: string | undefined }) {
   if (!due || balance <= 0) return null;
   const n = daysUntil(due);
   const late = n < 0;
