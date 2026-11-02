@@ -20,6 +20,7 @@ export type Database = {
           bill_path: string | null
           created_at: string
           direction: string
+          due_date: string | null
           entry_date: string
           id: string
           note: string | null
@@ -31,6 +32,7 @@ export type Database = {
           bill_path?: string | null
           created_at?: string
           direction: string
+          due_date?: string | null
           entry_date?: string
           id?: string
           note?: string | null
@@ -42,6 +44,7 @@ export type Database = {
           bill_path?: string | null
           created_at?: string
           direction?: string
+          due_date?: string | null
           entry_date?: string
           id?: string
           note?: string | null
