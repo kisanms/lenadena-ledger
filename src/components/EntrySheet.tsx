@@ -12,24 +12,36 @@ import { compressReceiptImage, formatBytes, uploadReceipt, type CompressResult }
 import { Camera, Image, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const today = () => new Date().toISOString().slice(0, 10);
+const localIso = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const today = () => localIso(new Date());
+const plusDays = (n: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return localIso(d);
+};
 
 export function EntrySheet({
   open,
   onOpenChange,
   party,
-  direction,
+  direction: initialDirection,
   onSaved,
+  edit,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   party: Party;
   direction: "gave" | "got";
   onSaved: (e: Entry, newBalance: number) => void;
+  /** When set, the sheet edits this existing entry instead of adding a new one. */
+  edit?: Entry | null;
 }) {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [date, setDate] = useState(today());
+  const [dueDate, setDueDate] = useState("");
+  const [direction, setDirection] = useState(initialDirection);
   const [saving, setSaving] = useState(false);
   const [compressing, setCompressing] = useState(false);
   const [receipt, setReceipt] = useState<CompressResult | null>(null);
@@ -41,15 +53,17 @@ export function EntrySheet({
 
   useEffect(() => {
     if (open) {
-      setAmount("");
-      setNote("");
-      setDate(today());
+      setAmount(edit ? String(edit.amount) : "");
+      setNote(edit?.note ?? "");
+      setDate(edit ? localIso(new Date(edit.entry_date)) : today());
+      setDueDate(edit?.due_date ?? "");
+      setDirection(edit ? edit.direction : initialDirection);
       setReceipt((old) => {
         if (old) URL.revokeObjectURL(old.previewUrl);
         return null;
       });
     }
-  }, [open]);
+  }, [open, edit, initialDirection]);
 
   const amt = Number(amount) || 0;
 
