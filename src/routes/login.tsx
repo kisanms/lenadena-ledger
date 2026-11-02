@@ -41,7 +41,9 @@ function Login() {
   const [phone, setPhone] = useState("");
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
-  const [selectedQ, setSelectedQ] = useState<string>(SECURITY_QUESTION_LIST[0].id);
+  const [selectedQ, setSelectedQ] = useState<string>(
+    SECURITY_QUESTION_LIST[0]?.id ?? "fav_animal"
+  );
   const [secAnswer, setSecAnswer] = useState("");
   const [userQuestion, setUserQuestion] = useState<string | null>(null);
   const [lookingUpQuestion, setLookingUpQuestion] = useState(false);
@@ -260,17 +262,16 @@ function Login() {
                   autoCapitalize="none"
                   autoCorrect="off"
                 />
-             <div className="mt-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-amber-900 dark:text-amber-200">
-  <div className="flex items-start gap-2">
-    <span className="text-base leading-none mt-0.5 select-none">⚠️</span>
-    <div className="space-y-0.5 text-left">
-      <p className="text-[11px] leading-relaxed text-amber-800/90 dark:text-amber-300/90">
-        Write in <strong>small letters or numbers</strong>. This secret answer is the <strong>only way</strong> to recover your account if you forget your password.
-      </p>
-    </div>
-  </div>
-</div>
-
+                <div className="mt-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-amber-900 dark:text-amber-200">
+                  <div className="flex items-start gap-2">
+                    <span className="text-base leading-none mt-0.5 select-none">⚠️</span>
+                    <div className="space-y-0.5 text-left">
+                      <p className="text-[11px] leading-relaxed text-amber-800/90 dark:text-amber-300/90">
+                        Write in <strong>small letters or numbers</strong>. This secret answer is the <strong>only way</strong> to recover your account if you forget your password.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </Field>
             </div>
           )}
