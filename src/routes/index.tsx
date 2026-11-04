@@ -10,6 +10,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { NotifyPrompt } from "@/components/NotifyPrompt";
 import { useParties, useProfile, useDues, balanceText, type PartyKind } from "@/lib/ledger";
 import { DueBadge } from "@/components/DueBadge";
+import { TodaySummary } from "@/components/TodaySummary";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { inr, initials, fmtDate, formatPhone, normalizePhone } from "@/lib/format";
@@ -171,6 +172,7 @@ function Dashboard() {
         </div>
       </div>
 
+      <div className="mx-4 mt-4"><TodaySummary /></div>
       <div className="mx-4 mt-4 empty:hidden"><InstallBanner /></div>
       <div className="mx-4 mt-3 empty:hidden"><NotifyPrompt /></div>
 
