@@ -530,6 +530,13 @@ export const translations = {
     gu: "બંધ કરો",
     mr: "बंद करा",
   },
+  aaj_ka_hisaab: { en: "Today's Summary", hi: "आज का हिसाब", hinglish: "Aaj Ka Hisaab", gu: "આજનો હિસાબ", mr: "आजचा हिशोब" },
+  today_credit_given: { en: "Credit Given", hi: "उधार दिया", hinglish: "Udhaar Diya", gu: "ઉધાર આપ્યું", mr: "उधार दिले" },
+  today_recovery: { en: "Recovery", hi: "वसूल हुआ", hinglish: "Vasooli Hui", gu: "વસૂલ થયું", mr: "वसूल झाले" },
+  today_net: { en: "Net Cashflow Today", hi: "आज का नेट कैशफ्लो", hinglish: "Aaj Ka Net Cashflow", gu: "આજનો નેટ કેશફ્લો", mr: "आजचा नेट कॅशफ्लो" },
+  view_today_entries: { en: "View today's {n} entries", hi: "आज की {n} एंट्री देखें", hinglish: "Aaj ki {n} entries dekhein", gu: "આજની {n} એન્ટ્રી જુઓ", mr: "आजच्या {n} नोंदी पहा" },
+  no_entries_today: { en: "No entries today yet", hi: "आज अभी कोई एंट्री नहीं", hinglish: "Aaj abhi koi entry nahi", gu: "આજે હજી કોઈ એન્ટ્રી નથી", mr: "आज अजून नोंद नाही" },
+  today_entries_title: { en: "Today's entries", hi: "आज की एंट्री", hinglish: "Aaj ki entries", gu: "આજની એન્ટ્રી", mr: "आजच्या नोंदी" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
