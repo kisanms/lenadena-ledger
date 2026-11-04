@@ -42,7 +42,7 @@ function useToday() {
 export function TodaySummary() {
   const { t } = useI18n();
   const { data = [] } = useToday();
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [list, setList] = useState(false);
   const given = data.filter((e) => e.direction === "gave").reduce((s, e) => s + e.amount, 0);
   const got = data.filter((e) => e.direction === "got").reduce((s, e) => s + e.amount, 0);
@@ -50,15 +50,23 @@ export function TodaySummary() {
 
   return (
     <div className="rounded-2xl border bg-card shadow-sm">
-      <button className="w-full flex items-center justify-between px-4 py-3" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+      <div className="w-full flex items-center justify-between px-4 py-3">
         <span className="flex items-center gap-2 font-semibold">
           <CalendarCheck className="h-4 w-4 text-primary" /> {t("aaj_ka_hisaab")}
         </span>
         <span className="flex items-center gap-2 text-sm">
           {!open && <span className={cn("font-bold", net >= 0 ? "text-gain" : "text-loss")}>{net >= 0 ? "+" : "−"}{inr(net)}</span>}
-          <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+            aria-label={open ? t("collapse_summary", "Hide today's summary") : t("expand_summary", "Show today's summary")}
+            className="grid place-items-center h-9 w-9 rounded-full active:bg-secondary"
+          >
+            <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
+          </button>
         </span>
-      </button>
+      </div>
       {open && (
         <div className="px-4 pb-4">
           <div className="grid grid-cols-2 gap-2">

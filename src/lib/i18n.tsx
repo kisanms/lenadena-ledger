@@ -536,6 +536,8 @@ export const translations = {
   today_net: { en: "Net Cashflow Today", hi: "आज का नेट कैशफ्लो", hinglish: "Aaj Ka Net Cashflow", gu: "આજનો નેટ કેશફ્લો", mr: "आजचा नेट कॅशफ्लो" },
   view_today_entries: { en: "View today's {n} entries", hi: "आज की {n} एंट्री देखें", hinglish: "Aaj ki {n} entries dekhein", gu: "આજની {n} એન્ટ્રી જુઓ", mr: "आजच्या {n} नोंदी पहा" },
   no_entries_today: { en: "No entries today yet", hi: "आज अभी कोई एंट्री नहीं", hinglish: "Aaj abhi koi entry nahi", gu: "આજે હજી કોઈ એન્ટ્રી નથી", mr: "आज अजून नोंद नाही" },
+  expand_summary: { en: "Show today's summary", hi: "आज का हिसाब दिखाएँ", hinglish: "Aaj ka hisaab dikhao", gu: "આજનો હિસાબ બતાવો", mr: "आजचे हिशेब दाखवा" },
+  collapse_summary: { en: "Hide today's summary", hi: "आज का हिसाब छिपाएँ", hinglish: "Aaj ka hisaab chhupao", gu: "આજનો હિસાબ છૂપાવો", mr: "आजचे हिशेब लपवा" },
   today_entries_title: { en: "Today's entries", hi: "आज की एंट्री", hinglish: "Aaj ki entries", gu: "આજની એન્ટ્રી", mr: "आजच्या नोंदी" },
 } as const;
 
