@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, FileDown, MessageCircle, Phone, Share2, Trash2, Pencil, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, FileDown, MessageCircle, MessageSquare, Phone, Share2, Trash2, Pencil } from "lucide-react";
 import { DueBadge } from "@/components/DueBadge";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils";
 import { downloadStatement, type Range } from "@/lib/pdf";
 import { Dialog as ImageDialog, DialogContent as ImageDialogContent } from "@/components/ui/dialog";
 import { useI18n } from "@/lib/i18n";
+import { EntryDetailSheet, BubblePhoto } from "@/components/EntryDetailSheet";
+import { smsLink } from "@/lib/cards";
 
 export const Route = createFileRoute("/party/$id")({
   head: () => ({
@@ -62,14 +64,34 @@ function PartyPage() {
   const [editEntry, setEditEntry] = useState<Entry | null>(null);
   const [editParty, setEditParty] = useState(false);
   const [pf, setPf] = useState({ name: "", phone: "", email: "", note: "" });
+  const [detail, setDetail] = useState<(Entry & { running: number }) | null>(null);
+  const [filter, setFilter] = useState<"all" | "this" | "last">("all");
 
   const rows = useMemo(() => {
     let run = 0;
     return (entries ?? []).map((e) => {
       run += e.direction === "gave" ? e.amount : -e.amount;
       return { ...e, running: run };
-    }).reverse();
+    });
   }, [entries]);
+
+  const groups = useMemo(() => {
+    const r = filter === "all" ? null : monthRange(filter === "this" ? 0 : -1);
+    const m = new Map<string, typeof rows>();
+    for (const e of rows) {
+      const d = iso(new Date(e.entry_date));
+      if (r && (d < r.from! || d > r.to!)) continue;
+      if (!m.has(d)) m.set(d, []);
+      m.get(d)!.push(e);
+    }
+    return [...m.entries()];
+  }, [rows, filter]);
+
+  const dayLabel = (d: string) => {
+    if (d === iso(new Date())) return t("cs_today");
+    if (d === iso(addDays(new Date(), -1))) return t("cs_yesterday");
+    return fmtDate(d);
+  };
 
   if (isLoading) return <div className="p-6 max-w-md mx-auto"><Skeleton className="h-40 rounded-2xl" /></div>;
   if (!party)
@@ -188,6 +210,9 @@ function PartyPage() {
             <Button size="icon" className="h-11 w-11 rounded-full bg-whatsapp hover:bg-whatsapp/90 text-gain-foreground" onClick={() => shareWhatsApp(party.phone, reminder)} aria-label="WhatsApp reminder">
               <MessageCircle className="h-5 w-5" />
             </Button>
+            <Button asChild size="icon" variant="secondary" className="h-11 w-11 rounded-full" aria-label="SMS reminder">
+              <a href={smsLink(party.phone, reminder)}><MessageSquare className="h-5 w-5" /></a>
+            </Button>
             <Button size="icon" variant="secondary" className="h-11 w-11 rounded-full" aria-label="Download PDF" onClick={() => setPdfOpen(true)}>
               <FileDown className="h-5 w-5" />
             </Button>
@@ -198,66 +223,58 @@ function PartyPage() {
         </div>
       </header>
 
-      <div className="px-4 mt-4 flex text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
-        <span className="flex-1">{t("entry_col", "Entry")}</span>
-        <span className="w-20 text-right">{l.gave}</span>
-        <span className="w-20 text-right">{l.got}</span>
-      </div>
-      <ul className="mt-1 px-2 space-y-1.5">
-        {rows.length === 0 && <li className="text-center text-muted-foreground py-12">{t("no_entries_yet", "No entries yet. Add the first one below.")}</li>}
-        {rows.map((e) => (
-          <li key={e.id}>
-            <button
-              onClick={() => setShare(receiptMessage({ business, party, entry: e, balance: e.running }))}
-              onContextMenu={(ev) => { ev.preventDefault(); if (!party.shared) setDel(e); }}
-              className="w-full flex items-center rounded-xl bg-card border px-3 py-3 text-left"
-            >
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">{fmtDate(e.entry_date)} <span className="text-muted-foreground text-xs">{fmtTime(e.entry_date)}</span></p>
-                {e.note && <p className="text-xs text-muted-foreground truncate">{e.note}</p>}
-                {e.due_date && e.direction === "gave" && (
-                  <p className="text-[11px] font-medium text-amber-800 dark:text-amber-300 mt-0.5">
-                    ⏱ {t("promised_by", "Promised by")} {fmtDate(e.due_date)}
-                  </p>
-                )}
-                {e.bill_path && (
-                  <button
-                    type="button"
-                    className="mt-2 inline-flex items-center gap-2 rounded-md border px-2 py-1 text-xs text-primary"
-                    onClick={(ev) => { ev.stopPropagation(); void viewReceipt(e.bill_path!); }}
-                    aria-label="View receipt photo"
-                  >
-                    <ImageIcon className="h-3.5 w-3.5" /> {loadingReceipt === e.bill_path ? "Loading..." : t("view_bill_photo", "View bill photo")}
-                  </button>
-                )}
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {t("bal_abbr", "Bal.")} {inr(Math.abs(e.running))} {e.running > 0 ? t("get_action", "get") : e.running < 0 ? t("give_action", "give") : ""}
-                </p>
-              </div>
-              <span className="w-20 text-right font-semibold text-loss">{e.direction === "gave" ? inr(e.amount) : ""}</span>
-              <span className="w-20 text-right font-semibold text-gain">{e.direction === "got" ? inr(e.amount) : ""}</span>
-              {!party.shared && <span className="ml-1 flex flex-col gap-1">
-                <span
-                  role="button"
-                  aria-label="Edit entry"
-                  className="p-1 text-primary"
-                  onClick={(ev) => { ev.stopPropagation(); setEditEntry(e); }}
-                >
-                  <Pencil className="h-4 w-4" />
-                </span>
-                <span
-                  role="button"
-                  aria-label="Delete entry"
-                  className="p-1 text-muted-foreground"
-                  onClick={(ev) => { ev.stopPropagation(); setDel(e); }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </span>
-              </span>}
-            </button>
-          </li>
+      <div className="px-4 mt-4 flex gap-2">
+        {([["all", t("cs_all")], ["this", t("cs_this_month")], ["last", t("cs_last_month")]] as const).map(([k, lbl]) => (
+          <button key={k} onClick={() => setFilter(k)} className={cn("rounded-full border px-3 py-1 text-xs font-medium", filter === k ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground")}>{lbl}</button>
         ))}
-      </ul>
+      </div>
+      <div className="mt-2 px-3 space-y-2">
+        {groups.length === 0 && <p className="text-center text-muted-foreground py-12">{t("no_entries_yet", "No entries yet. Add the first one below.")}</p>}
+        {groups.map(([day, list]) => (
+          <section key={day} className="space-y-2">
+            <div className="flex justify-center py-1"><span className="rounded-full bg-muted px-3 py-0.5 text-[11px] font-medium text-muted-foreground">{dayLabel(day)}</span></div>
+            {list.map((e) => {
+              const gave = e.direction === "gave";
+              return (
+                <div key={e.id} className={cn("flex flex-col", gave ? "items-start" : "items-end")}>
+                  <button
+                    onClick={() => setDetail(e)}
+                    className={cn("w-[72%] rounded-2xl border p-3 text-left shadow-sm", gave ? "rounded-tl-sm bg-card" : "rounded-tr-sm bg-gain/10 border-gain/30")}
+                  >
+                    <p className="text-[10px] text-muted-foreground">{party.shared ? `${t("cs_added_by")} ${party.name}` : t("cs_added_by_you")}</p>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className={cn("text-lg font-bold", gave ? "text-loss" : "text-gain")}>{gave ? "↑" : "↓"} {inr(e.amount)}</span>
+                      <span className="text-[10px] text-muted-foreground">{fmtTime(e.entry_date)}</span>
+                    </div>
+                    {e.note && <p className="text-xs text-muted-foreground truncate">{e.note}</p>}
+                    {e.due_date && gave && <p className="text-[11px] font-medium text-amber-700 dark:text-amber-300 mt-0.5">⏱ {t("promised_by", "Promised by")} {fmtDate(e.due_date)}</p>}
+                    {e.bill_path && <BubblePhoto path={e.bill_path} label={t("view_bill_photo", "View bill photo")} />}
+                  </button>
+                  <span className="mt-0.5 px-1 text-[11px] text-muted-foreground">
+                    {inr(Math.abs(e.running))} {e.running > 0 ? t("cs_due") : e.running < 0 ? t("cs_advance") : t("cs_settled")}
+                  </span>
+                </div>
+              );
+            })}
+          </section>
+        ))}
+      </div>
+
+      <EntryDetailSheet
+        entry={detail}
+        onClose={() => setDetail(null)}
+        partyName={party.name}
+        phone={party.phone}
+        business={business ?? "LenaDena"}
+        upiId={profile?.upi_id}
+        canEdit={!party.shared}
+        gaveLabel={l.gave}
+        gotLabel={l.got}
+        message={detail ? receiptMessage({ business, party, entry: detail, balance: detail.running, upiId: profile?.upi_id }) : ""}
+        onEdit={() => { if (detail) { setEditEntry(detail); setDetail(null); } }}
+        onDelete={() => { if (detail) { setDel(detail); setDetail(null); } }}
+        onViewPhoto={(u) => setImageToView(u)}
+      />
 
       {party.shared ? (
         <p className="fixed bottom-0 inset-x-0 bg-secondary text-center text-sm text-muted-foreground p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
