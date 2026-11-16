@@ -68,6 +68,8 @@ function PartyPage() {
   const [pf, setPf] = useState({ name: "", phone: "", email: "", note: "" });
   const [detail, setDetail] = useState<(Entry & { running: number }) | null>(null);
   const [filter, setFilter] = useState<"all" | "this" | "last">("all");
+
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
 
   // If this is a shared ledger, also load the owner's profile (the supplier) so the customer can get their UPI ID
@@ -93,12 +95,41 @@ function PartyPage() {
     return [...m.entries()];
   }, [rows, filter]);
 
-  // Instant scroll to the latest entry at the bottom when opening or filtering
-  useEffect(() => {
-    if (entries && entries.length > 0) {
-      chatBottomRef.current?.scrollIntoView({ behavior: "instant" });
+  // Robust bottom scroll: sets container scrollTop directly and anchors chatBottomRef
+  const scrollToBottom = (behavior: ScrollBehavior = "auto") => {
+    const el = scrollContainerRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
     }
-  }, [entries, filter]);
+    try {
+      chatBottomRef.current?.scrollIntoView({ behavior });
+    } catch {
+      // Fallback for older WebKit
+    }
+  };
+
+  // Triggers when page finishes loading, when entries arrive, or when filters change
+  useEffect(() => {
+    if (!isLoading && entries && entries.length > 0) {
+      // 1. Immediate scroll
+      scrollToBottom("auto");
+
+      // 2. Next animation frame (after React commits DOM elements)
+      const raf = requestAnimationFrame(() => {
+        scrollToBottom("auto");
+      });
+
+      // 3. Short timeouts for font rendering, safe-area and thumbnail heights
+      const t1 = setTimeout(() => scrollToBottom("auto"), 60);
+      const t2 = setTimeout(() => scrollToBottom("auto"), 200);
+
+      return () => {
+        cancelAnimationFrame(raf);
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [entries, filter, isLoading, groups.length]);
 
   const dayLabel = (d: string) => {
     if (d === iso(new Date())) return t("cs_today");
@@ -295,7 +326,10 @@ function PartyPage() {
       </div>
 
       {/* 2. SCROLLABLE CHAT MESSAGES FEED */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 overscroll-contain">
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto px-3 py-3 space-y-3 overscroll-contain"
+      >
         {groups.length === 0 && (
           <p className="text-center text-muted-foreground py-16">{t("no_entries_yet", "No entries yet. Add the first one below.")}</p>
         )}
@@ -370,8 +404,8 @@ function PartyPage() {
             })}
           </section>
         ))}
-        {/* Invisible anchor for automatic bottom scroll */}
-        <div ref={chatBottomRef} className="h-1" />
+        {/* Invisible anchor for bottom scroll */}
+        <div ref={chatBottomRef} className="h-1 shrink-0" />
       </div>
 
       {/* 3. STATIC BOTTOM BAR */}
@@ -430,7 +464,7 @@ function PartyPage() {
           open={remindOpen}
           onOpenChange={setRemindOpen}
           text={reminder}
-          phone={party.phone}
+          phone={party.phone ?? null}
           title="Send Reminder"
         />
       )}
@@ -478,7 +512,7 @@ function PartyPage() {
         </DialogContent>
       </Dialog>
 
-      <ShareDialog open={!!share} onOpenChange={(o) => !o && setShare(null)} text={share ?? ""} phone={party.phone} title="Share receipt" />
+      <ShareDialog open={!!share} onOpenChange={(o) => !o && setShare(null)} text={share ?? ""} phone={party.phone ?? null} title="Share receipt" />
 
       {/* DELETE CONFIRMATION */}
       <AlertDialog open={!!del} onOpenChange={(o) => !o && setDel(null)}>
