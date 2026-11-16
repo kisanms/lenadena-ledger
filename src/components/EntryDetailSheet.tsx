@@ -177,15 +177,16 @@ export function EntryDetailSheet(props: {
         </DrawerContent>
       </Drawer>
 
-      {props.canRemind && (
+            {props.canRemind && (
         <ShareDialog
           open={remindOpen}
           onOpenChange={setRemindOpen}
           text={props.message}
-          phone={props.phone}
+          phone={props.phone ?? null}
           title="Send Reminder"
         />
       )}
+
     </>
   );
 }
