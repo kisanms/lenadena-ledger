@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MessageCircle, Pencil, Trash2, QrCode, Receipt, Download, Share2, Image as ImageIcon } from "lucide-react";
+import { MessageCircle, Pencil, Trash2, QrCode, Receipt, Download, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,8 @@ export function EntryDetailSheet(props: {
   message: string;
   isCreditDue: boolean;
   showPay: boolean;
+  isShared?: boolean;
+  canRemind?: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onViewPhoto: (url: string) => void;
@@ -58,9 +60,13 @@ export function EntryDetailSheet(props: {
   useEffect(() => { setQr(null); }, [e?.id]);
 
   if (!e) return null;
-  // Red (text-loss) if it's credit due, Green (text-gain) if it's payment received/made
+  // Red (text-loss) if it's credit due, Green (text-gain) if it's payment
   const color = props.isCreditDue ? "text-loss" : "text-gain";
-  const balLabel = e.running > 0 ? t("cs_due") : e.running < 0 ? t("cs_advance") : t("cs_settled");
+
+  // Balance calculation: for customer (isShared), negative running means money owed (Due), NOT Advance!
+  const effectiveRunning = props.isShared ? -e.running : e.running;
+  const balLabel = effectiveRunning > 0 ? t("cs_due") : effectiveRunning < 0 ? t("cs_advance") : t("cs_settled");
+  const balColor = effectiveRunning > 0 ? "text-loss" : effectiveRunning < 0 ? "text-gain" : "";
 
   const slip = async (mode: "save" | "share") => {
     try {
@@ -73,7 +79,7 @@ export function EntryDetailSheet(props: {
         amount: e.amount,
         note: e.note,
         balance: e.running,
-        balanceLabel: `Balance (${e.running > 0 ? "Due" : e.running < 0 ? "Advance" : "Settled"})`,
+        balanceLabel: `Balance (${effectiveRunning > 0 ? "Due" : effectiveRunning < 0 ? "Advance" : "Settled"})`,
       });
       await deliverImage(blob, `LenaDena-Slip-${props.partyName.replace(/\W+/g, "-")}.png`, mode);
     } catch (err) { toast.error(err instanceof Error ? err.message : "Could not create slip"); }
@@ -103,7 +109,7 @@ export function EntryDetailSheet(props: {
               <p className="text-xs text-muted-foreground">{props.isCreditDue ? props.gaveLabel : props.gotLabel}</p>
             </DrawerHeader>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {photo && (
                 <button onClick={() => props.onViewPhoto(photo)} className="block w-full overflow-hidden rounded-2xl border bg-muted">
                   <img src={photo} alt="Bill" className="max-h-56 w-full object-cover" />
@@ -115,9 +121,13 @@ export function EntryDetailSheet(props: {
                 {e.due_date && props.isCreditDue && (
                   <div className="p-3 flex justify-between text-sm"><span className="text-muted-foreground">{t("promised_by")}</span><span className="text-amber-700 dark:text-amber-300 font-medium">{fmtDate(e.due_date)}</span></div>
                 )}
-                <div className="p-3 flex justify-between text-sm"><span className="text-muted-foreground">{t("cs_balance_after")}</span><span className={cn("font-semibold", e.running > 0 ? "text-loss" : e.running < 0 ? "text-gain" : "")}>{inr(Math.abs(e.running))} {balLabel}</span></div>
+                <div className="p-3 flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t("cs_balance_after")}</span>
+                  <span className={cn("font-semibold", balColor)}>{inr(Math.abs(e.running))} {balLabel}</span>
+                </div>
               </div>
 
+              {/* PAYMENT QR (Visible to customer to pay directly) */}
               {showPay && (
                 <div className="rounded-2xl border bg-card p-3">
                   {!validUpi ? (
@@ -151,32 +161,36 @@ export function EntryDetailSheet(props: {
                 </>}
               </div>
 
-              <div className="pt-2">
-                <Button
-                  className="w-full h-12 bg-whatsapp hover:bg-whatsapp/90 text-gain-foreground font-semibold"
-                  onClick={() => setRemindOpen(true)}
-                >
-                  <MessageCircle className="mr-2 h-5 w-5" /> Send Reminder (WhatsApp / SMS)
-                </Button>
-              </div>
+              {/* Reminder button ONLY for Supplier. Hidden for Customer */}
+              {props.canRemind && (
+                <div className="pt-1">
+                  <Button
+                    className="w-full h-12 bg-whatsapp hover:bg-whatsapp/90 text-gain-foreground font-semibold"
+                    onClick={() => setRemindOpen(true)}
+                  >
+                    <MessageCircle className="mr-2 h-5 w-5" /> Send Reminder (WhatsApp / SMS)
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </DrawerContent>
       </Drawer>
 
-      <ShareDialog
-        open={remindOpen}
-        onOpenChange={setRemindOpen}
-        text={props.message}
-        phone={props.phone}
-        title="Send Reminder"
-      />
+      {props.canRemind && (
+        <ShareDialog
+          open={remindOpen}
+          onOpenChange={setRemindOpen}
+          text={props.message}
+          phone={props.phone}
+          title="Send Reminder"
+        />
+      )}
     </>
   );
 }
 
 export function BubblePhoto({ path, label }: { path: string; label: string }) {
   const url = useReceiptUrl(path);
-  return url ? <img src={url} alt="Bill" className="mt-2 h-28 w-full rounded-lg object-cover" loading="lazy" />
-    : <span className="mt-2 inline-flex items-center gap-1 text-xs text-primary"><ImageIcon className="h-3.5 w-3.5" />{label}</span>;
+  return url ? <img src={url} alt={label} className="mt-2 h-28 w-full rounded-lg object-cover" loading="lazy" /> : null;
 }
