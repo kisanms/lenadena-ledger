@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, FileDown, MessageCircle, MessageSquare, Phone, Share2, Trash2, Pencil, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, FileDown, MessageCircle, MessageSquare, Phone, Share2, Trash2, Pencil } from "lucide-react";
 import { DueBadge } from "@/components/DueBadge";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
