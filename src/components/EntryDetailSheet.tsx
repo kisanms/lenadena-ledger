@@ -33,7 +33,7 @@ export function EntryDetailSheet(props: {
   partyName: string;
   phone?: string | null;
   business: string;
-  upiId?: string | null;
+  upiId?: string | null | undefined;
   canEdit: boolean;
   gaveLabel: string;
   gotLabel: string;
