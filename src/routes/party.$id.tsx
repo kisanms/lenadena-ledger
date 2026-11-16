@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, FileDown, MessageCircle, MessageSquare, Phone, Share2, Trash2, Pencil } from "lucide-react";
+import { ArrowLeft, FileDown, MessageCircle, Phone, Share2, Trash2, Pencil } from "lucide-react";
 import { DueBadge } from "@/components/DueBadge";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { EntrySheet } from "@/components/EntrySheet";
-import { ShareDialog, shareNative, shareWhatsApp } from "@/components/ShareDialog";
+import { ShareDialog, shareNative } from "@/components/ShareDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { balanceText, labels, receiptMessage, useEntries, useParty, useProfile, type Entry } from "@/lib/ledger";
@@ -24,7 +24,6 @@ import { downloadStatement, type Range } from "@/lib/pdf";
 import { Dialog as ImageDialog, DialogContent as ImageDialogContent } from "@/components/ui/dialog";
 import { useI18n } from "@/lib/i18n";
 import { EntryDetailSheet, BubblePhoto } from "@/components/EntryDetailSheet";
-import { smsLink } from "@/lib/cards";
 
 export const Route = createFileRoute("/party/$id")({
   head: () => ({
@@ -56,6 +55,7 @@ function PartyPage() {
   const [share, setShare] = useState<string | null>(null);
   const [del, setDel] = useState<Entry | "party" | null>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
+  const [remindOpen, setRemindOpen] = useState(false);
   const [range, setRange] = useState<Range>({});
   const [imageToView, setImageToView] = useState<string | null>(null);
   const [loadingReceipt, setLoadingReceipt] = useState<string | null>(null);
@@ -66,6 +66,9 @@ function PartyPage() {
   const [pf, setPf] = useState({ name: "", phone: "", email: "", note: "" });
   const [detail, setDetail] = useState<(Entry & { running: number }) | null>(null);
   const [filter, setFilter] = useState<"all" | "this" | "last">("all");
+
+  // If this is a shared ledger, also load the owner's profile (the supplier) so the customer can get their UPI ID
+  const { data: ownerProfile } = useProfile(party?.shared ? party.user_id : undefined);
 
   const rows = useMemo(() => {
     let run = 0;
@@ -107,10 +110,16 @@ function PartyPage() {
   const dueDate = [...(entries ?? [])].reverse().find((e) => e.due_date)?.due_date ?? null;
   const reminder = receiptMessage({ business, party, balance: party.balance, upiId: profile?.upi_id, dueDate });
 
+  // Supplier's UPI details for payment:
+  // If customer is viewing shared supplier, payee is the supplier; otherwise it's the current user's UPI
+  const payeeUpi = party.shared ? (ownerProfile?.upi_id || null) : profile?.upi_id;
+  const payeeBusiness = party.shared ? (ownerProfile?.business_name || party.name) : (business ?? "LenaDena");
+
   const openEditParty = () => {
     setPf({ name: party.name, phone: party.phone ?? "", email: party.email ?? "", note: party.note ?? "" });
     setEditParty(true);
   };
+
   const saveParty = async () => {
     if (!pf.name.trim()) return void toast.error("Enter a name");
     const { error } = await supabase.from("parties").update({
@@ -141,27 +150,6 @@ function PartyPage() {
     setDel(null);
   };
 
-  const viewReceipt = async (path: string) => {
-    try {
-      setLoadingReceipt(path);
-      const { data, error } = await supabase.storage.from("receipts").createSignedUrl(path, 60 * 60);
-      if (!error && data?.signedUrl) {
-        setImageToView(data.signedUrl);
-        return;
-      }
-      const { data: pub } = supabase.storage.from("receipts").getPublicUrl(path);
-      if (pub?.publicUrl) {
-        setImageToView(pub.publicUrl);
-        return;
-      }
-      toast.error(error?.message ?? "Could not open receipt photo");
-    } catch (err: any) {
-      toast.error(err?.message ?? "Could not open receipt photo");
-    } finally {
-      setLoadingReceipt(null);
-    }
-  };
-
   const savePdf = async (r: Range) => {
     try {
       await downloadStatement(party, entries ?? [], business, r);
@@ -173,6 +161,17 @@ function PartyPage() {
   };
 
   const kindLabel = party.kind === "customer" ? t("customer_label", "Customer") : t("supplier_label", "Supplier");
+
+  // Determine if a selected entry is credit due:
+  // On supplier screen: supplier gave credit -> e.direction === "gave" is due (Red)
+  // On customer screen: customer received credit -> e.direction === "got" is due (Red)
+  const isDetailCreditDue = detail ? (party.shared ? detail.direction === "got" : detail.direction === "gave") : false;
+
+  // Show Payment QR only to the debtor (the customer who owes the money):
+  // - If viewing as a customer in a shared khata (party.shared && isDetailCreditDue): true
+  // - If viewing your supplier in your own ledger (party.kind === "supplier" && isDetailCreditDue): true
+  // - If viewing your customer as a merchant: FALSE (supplier doesn't pay customer)
+  const shouldShowPayInDetail = isDetailCreditDue && (party.shared || party.kind === "supplier");
 
   return (
     <div className="min-h-dvh max-w-md mx-auto pb-32">
@@ -191,13 +190,18 @@ function PartyPage() {
               <Phone className="h-5 w-5" />
             </a>
           )}
-          {!party.shared && <button onClick={openEditParty} className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Edit details">
-            <Pencil className="h-5 w-5" />
-          </button>}
-          {!party.shared && <button onClick={() => setDel("party")} className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Delete party">
-            <Trash2 className="h-5 w-5" />
-          </button>}
+          {!party.shared && (
+            <button onClick={openEditParty} className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Edit details">
+              <Pencil className="h-5 w-5" />
+            </button>
+          )}
+          {!party.shared && (
+            <button onClick={() => setDel("party")} className="grid place-items-center h-10 w-10 rounded-full bg-primary-foreground/10" aria-label="Delete party">
+              <Trash2 className="h-5 w-5" />
+            </button>
+          )}
         </div>
+
         <div className="mt-5 rounded-2xl bg-card text-card-foreground p-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground">{balanceText(party.balance)}</p>
@@ -206,17 +210,33 @@ function PartyPage() {
             </p>
             <DueBadge due={dueDate} balance={party.balance} className="mt-1" />
           </div>
+
+          {/* Unified Actions: 1 Reminder button (opens WhatsApp/SMS picker) + PDF + Native Share */}
           <div className="flex gap-2">
-            <Button size="icon" className="h-11 w-11 rounded-full bg-whatsapp hover:bg-whatsapp/90 text-gain-foreground" onClick={() => shareWhatsApp(party.phone, reminder)} aria-label="WhatsApp reminder">
+            <Button
+              size="icon"
+              className="h-11 w-11 rounded-full bg-whatsapp hover:bg-whatsapp/90 text-gain-foreground"
+              onClick={() => setRemindOpen(true)}
+              aria-label="Send WhatsApp or SMS reminder"
+            >
               <MessageCircle className="h-5 w-5" />
             </Button>
-            <Button asChild size="icon" variant="secondary" className="h-11 w-11 rounded-full" aria-label="SMS reminder">
-              <a href={smsLink(party.phone, reminder)}><MessageSquare className="h-5 w-5" /></a>
-            </Button>
-            <Button size="icon" variant="secondary" className="h-11 w-11 rounded-full" aria-label="Download PDF" onClick={() => setPdfOpen(true)}>
+            <Button
+              size="icon"
+              variant="secondary"
+              className="h-11 w-11 rounded-full"
+              aria-label="Download PDF"
+              onClick={() => setPdfOpen(true)}
+            >
               <FileDown className="h-5 w-5" />
             </Button>
-            <Button size="icon" variant="secondary" className="h-11 w-11 rounded-full" onClick={() => shareNative(reminder)} aria-label="Share">
+            <Button
+              size="icon"
+              variant="secondary"
+              className="h-11 w-11 rounded-full"
+              onClick={() => shareNative(reminder)}
+              aria-label="Share"
+            >
               <Share2 className="h-5 w-5" />
             </Button>
           </div>
@@ -225,29 +245,50 @@ function PartyPage() {
 
       <div className="px-4 mt-4 flex gap-2">
         {([["all", t("cs_all")], ["this", t("cs_this_month")], ["last", t("cs_last_month")]] as const).map(([k, lbl]) => (
-          <button key={k} onClick={() => setFilter(k)} className={cn("rounded-full border px-3 py-1 text-xs font-medium", filter === k ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground")}>{lbl}</button>
+          <button
+            key={k}
+            onClick={() => setFilter(k)}
+            className={cn("rounded-full border px-3 py-1 text-xs font-medium", filter === k ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground")}
+          >
+            {lbl}
+          </button>
         ))}
       </div>
+
       <div className="mt-2 px-3 space-y-2">
         {groups.length === 0 && <p className="text-center text-muted-foreground py-12">{t("no_entries_yet", "No entries yet. Add the first one below.")}</p>}
         {groups.map(([day, list]) => (
           <section key={day} className="space-y-2">
-            <div className="flex justify-center py-1"><span className="rounded-full bg-muted px-3 py-0.5 text-[11px] font-medium text-muted-foreground">{dayLabel(day)}</span></div>
+            <div className="flex justify-center py-1">
+              <span className="rounded-full bg-muted px-3 py-0.5 text-[11px] font-medium text-muted-foreground">{dayLabel(day)}</span>
+            </div>
             {list.map((e) => {
-              const gave = e.direction === "gave";
+              // Credit due is Red on both sides; Payment is Green
+              const isCredit = party.shared ? e.direction === "got" : e.direction === "gave";
               return (
-                <div key={e.id} className={cn("flex flex-col", gave ? "items-start" : "items-end")}>
+                <div key={e.id} className={cn("flex flex-col", isCredit ? "items-start" : "items-end")}>
                   <button
                     onClick={() => setDetail(e)}
-                    className={cn("w-[72%] rounded-2xl border p-3 text-left shadow-sm", gave ? "rounded-tl-sm bg-card" : "rounded-tr-sm bg-gain/10 border-gain/30")}
+                    className={cn(
+                      "w-[72%] rounded-2xl border p-3 text-left shadow-sm",
+                      isCredit ? "rounded-tl-sm bg-card border-loss/20" : "rounded-tr-sm bg-gain/10 border-gain/30"
+                    )}
                   >
-                    <p className="text-[10px] text-muted-foreground">{party.shared ? `${t("cs_added_by")} ${party.name}` : t("cs_added_by_you")}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {party.shared ? `${t("cs_added_by")} ${party.name}` : t("cs_added_by_you")}
+                    </p>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className={cn("text-lg font-bold", gave ? "text-loss" : "text-gain")}>{gave ? "↑" : "↓"} {inr(e.amount)}</span>
+                      <span className={cn("text-lg font-bold", isCredit ? "text-loss" : "text-gain")}>
+                        {isCredit ? "↑" : "↓"} {inr(e.amount)}
+                      </span>
                       <span className="text-[10px] text-muted-foreground">{fmtTime(e.entry_date)}</span>
                     </div>
                     {e.note && <p className="text-xs text-muted-foreground truncate">{e.note}</p>}
-                    {e.due_date && gave && <p className="text-[11px] font-medium text-amber-700 dark:text-amber-300 mt-0.5">⏱ {t("promised_by", "Promised by")} {fmtDate(e.due_date)}</p>}
+                    {e.due_date && isCredit && (
+                      <p className="text-[11px] font-medium text-amber-700 dark:text-amber-300 mt-0.5">
+                        ⏱ {t("promised_by", "Promised by")} {fmtDate(e.due_date)}
+                      </p>
+                    )}
                     {e.bill_path && <BubblePhoto path={e.bill_path} label={t("view_bill_photo", "View bill photo")} />}
                   </button>
                   <span className="mt-0.5 px-1 text-[11px] text-muted-foreground">
@@ -265,31 +306,43 @@ function PartyPage() {
         onClose={() => setDetail(null)}
         partyName={party.name}
         phone={party.phone}
-        business={business ?? "LenaDena"}
-        upiId={profile?.upi_id}
+        business={payeeBusiness}
+        upiId={payeeUpi}
         canEdit={!party.shared}
         gaveLabel={l.gave}
         gotLabel={l.got}
+        isCreditDue={isDetailCreditDue}
+        showPay={shouldShowPayInDetail}
         message={detail ? receiptMessage({ business, party, entry: detail, balance: detail.running, upiId: profile?.upi_id }) : ""}
         onEdit={() => { if (detail) { setEditEntry(detail); setDetail(null); } }}
         onDelete={() => { if (detail) { setDel(detail); setDetail(null); } }}
         onViewPhoto={(u) => setImageToView(u)}
       />
 
+      <ShareDialog
+        open={remindOpen}
+        onOpenChange={setRemindOpen}
+        text={reminder}
+        phone={party.phone}
+        title="Send Reminder"
+      />
+
       {party.shared ? (
         <p className="fixed bottom-0 inset-x-0 bg-secondary text-center text-sm text-muted-foreground p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           {t("shared_by_prefix", "Shared by")} {party.name} · {t("updates_live", "updates live")}
         </p>
-      ) : <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t">
-        <div className="max-w-md mx-auto grid grid-cols-2 gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <Button className="h-14 text-base bg-loss hover:bg-loss/90 text-loss-foreground" onClick={() => setDir("gave")}>
-            {l.gave} ₹
-          </Button>
-          <Button className="h-14 text-base bg-gain hover:bg-gain/90 text-gain-foreground" onClick={() => setDir("got")}>
-            {l.got} ₹
-          </Button>
+      ) : (
+        <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t">
+          <div className="max-w-md mx-auto grid grid-cols-2 gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <Button className="h-14 text-base bg-loss hover:bg-loss/90 text-loss-foreground" onClick={() => setDir("gave")}>
+              {l.gave} ₹
+            </Button>
+            <Button className="h-14 text-base bg-gain hover:bg-gain/90 text-gain-foreground" onClick={() => setDir("got")}>
+              {l.got} ₹
+            </Button>
+          </div>
         </div>
-      </div>}
+      )}
 
       <EntrySheet
         open={!!dir || !!editEntry}
@@ -299,6 +352,7 @@ function PartyPage() {
         edit={editEntry}
         onSaved={(entry, bal) => { if (!editEntry) setShare(receiptMessage({ business, party, entry, balance: bal })); }}
       />
+
       <Dialog open={editParty} onOpenChange={setEditParty}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>Edit {kindLabel} details</DialogTitle></DialogHeader>
@@ -311,6 +365,7 @@ function PartyPage() {
           </div>
         </DialogContent>
       </Dialog>
+
       <ShareDialog open={!!share} onOpenChange={(o) => !o && setShare(null)} text={share ?? ""} phone={party.phone} title="Share receipt" />
 
       <AlertDialog open={!!del} onOpenChange={(o) => !o && setDel(null)}>
@@ -334,12 +389,7 @@ function PartyPage() {
             <DialogTitle className="text-base font-semibold flex items-center justify-between gap-3">
               <span>Bill / Receipt Photo</span>
               {imageToView && (
-                <a
-                  href={imageToView}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="shrink-0 text-xs text-primary underline font-normal"
-                >
+                <a href={imageToView} target="_blank" rel="noreferrer" className="shrink-0 text-xs text-primary underline font-normal">
                   Open original
                 </a>
               )}
@@ -353,6 +403,7 @@ function PartyPage() {
           )}
         </ImageDialogContent>
       </ImageDialog>
+
       <Dialog open={pdfOpen} onOpenChange={setPdfOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>{t("download_statement", "Download statement")}</DialogTitle></DialogHeader>
