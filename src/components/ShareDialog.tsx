@@ -1,8 +1,9 @@
-import { MessageCircle, Share2, Copy } from "lucide-react";
+import { MessageCircle, MessageSquare, Share2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { waNumber } from "@/lib/format";
+import { smsLink } from "@/lib/cards";
 
 export function shareWhatsApp(phone: string | null | undefined, text: string) {
   const n = waNumber(phone);
@@ -28,7 +29,7 @@ export function ShareDialog({
   onOpenChange,
   text,
   phone,
-  title = "Entry saved",
+  title = "Send Reminder",
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -43,28 +44,50 @@ export function ShareDialog({
           <DrawerHeader className="px-0">
             <DrawerTitle className="font-display text-2xl">{title}</DrawerTitle>
           </DrawerHeader>
-          <pre className="whitespace-pre-wrap rounded-xl bg-muted p-4 text-sm font-sans mb-4">{text}</pre>
-          <div className="space-y-2">
-            <Button className="w-full h-12 bg-whatsapp text-gain-foreground hover:bg-whatsapp/90" onClick={() => shareWhatsApp(phone, text)}>
+          <pre className="whitespace-pre-wrap rounded-xl bg-muted p-4 text-xs font-sans mb-4 max-h-40 overflow-y-auto">{text}</pre>
+          <div className="space-y-2.5">
+            <Button
+              className="w-full h-12 bg-whatsapp text-gain-foreground hover:bg-whatsapp/90 font-semibold"
+              onClick={() => {
+                shareWhatsApp(phone, text);
+                onOpenChange(false);
+              }}
+            >
               <MessageCircle className="mr-2 h-5 w-5" /> Send on WhatsApp
             </Button>
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="secondary" className="h-12" onClick={() => shareNative(text)}>
-                <Share2 className="mr-2 h-4 w-4" /> Share
-              </Button>
+
+            <Button asChild variant="secondary" className="w-full h-12 font-semibold">
+              <a href={smsLink(phone, text)} onClick={() => onOpenChange(false)}>
+                <MessageSquare className="mr-2 h-5 w-5" /> Send via SMS (Free SIM)
+              </a>
+            </Button>
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
               <Button
-                variant="secondary"
-                className="h-12"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(text);
-                  toast.success("Copied");
+                variant="outline"
+                className="h-11"
+                onClick={() => {
+                  shareNative(text);
+                  onOpenChange(false);
                 }}
               >
-                <Copy className="mr-2 h-4 w-4" /> Copy
+                <Share2 className="mr-2 h-4 w-4" /> Other Apps
+              </Button>
+              <Button
+                variant="outline"
+                className="h-11"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(text);
+                  toast.success("Copied to clipboard");
+                  onOpenChange(false);
+                }}
+              >
+                <Copy className="mr-2 h-4 w-4" /> Copy Text
               </Button>
             </div>
-            <Button variant="ghost" className="w-full" onClick={() => onOpenChange(false)}>
-              Done
+
+            <Button variant="ghost" className="w-full mt-1" onClick={() => onOpenChange(false)}>
+              Cancel
             </Button>
           </div>
         </div>
