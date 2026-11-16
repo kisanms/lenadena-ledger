@@ -14,7 +14,8 @@ export function DueBadge({
 }) {
   const { t, lang } = useI18n();
 
-  if (!due || balance <= 0) return null;
+  // Show badge if there is a due date and an active balance (works for both supplier balance > 0 and customer balance < 0)
+  if (!due || Math.abs(balance) === 0) return null;
   const n = daysUntil(due);
   const late = n < 0;
 
