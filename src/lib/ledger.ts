@@ -150,6 +150,9 @@ export function useLedgerRealtime(enabled: boolean) {
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "entries" }, () => {
         qc.invalidateQueries({ queryKey: ["entries"] });
+        qc.invalidateQueries({ queryKey: ["parties"] });
+        qc.invalidateQueries({ queryKey: ["party"] });
+        qc.invalidateQueries({ queryKey: ["dues"] });
       })
       .subscribe();
     return () => {

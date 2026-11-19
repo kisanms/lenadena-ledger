@@ -129,6 +129,7 @@ function PartyPage() {
         clearTimeout(t2);
       };
     }
+    return undefined;
   }, [entries, filter, isLoading, groups.length]);
 
   const dayLabel = (d: string) => {
