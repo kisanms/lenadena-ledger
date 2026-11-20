@@ -196,19 +196,46 @@
 }
 
 @keyframes pos-ripple { 
-  from { clip-path: circle(0% at var(--rx, 75%) var(--ry, 5%)); } 
-  to { clip-path: circle(150% at var(--rx, 75%) var(--ry, 5%)); } 
+  0% { 
+    clip-path: circle(0% at var(--rx, 75%) var(--ry, 5%)); 
+    opacity: 0.55;
+    transform: scale(0.985);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% { 
+    clip-path: circle(160% at var(--rx, 75%) var(--ry, 5%)); 
+    opacity: 1;
+    transform: scale(1);
+  } 
 }
 .pos-enter { 
-  animation: pos-ripple 550ms cubic-bezier(.25, .8, .25, 1) both; 
+  animation: pos-ripple 750ms cubic-bezier(0.16, 1, 0.3, 1) both; 
+  transform-origin: var(--rx, 75%) var(--ry, 5%);
+  will-change: clip-path, transform, opacity;
 }
 
 @keyframes khata-ripple { 
-  from { clip-path: circle(0% at var(--rx, 25%) var(--ry, 5%)); } 
-  to { clip-path: circle(150% at var(--rx, 25%) var(--ry, 5%)); } 
+  0% { 
+    clip-path: circle(0% at var(--rx, 25%) var(--ry, 5%)); 
+    opacity: 0.55;
+    transform: scale(0.985);
+  } 
+  35% {
+    opacity: 1;
+  }
+  100% { 
+    clip-path: circle(160% at var(--rx, 25%) var(--ry, 5%)); 
+    opacity: 1;
+    transform: scale(1);
+  } 
 }
 .khata-enter { 
-  animation: khata-ripple 550ms cubic-bezier(.25, .8, .25, 1) both; 
+  animation: khata-ripple 750ms cubic-bezier(0.16, 1, 0.3, 1) both; 
+  transform-origin: var(--rx, 25%) var(--ry, 5%);
+  will-change: clip-path, transform, opacity;
 }
+
 
 @keyframes hold-ring { from { stroke-dashoffset: 126; } to { stroke-dashoffset: 0; } }
