@@ -237,5 +237,3 @@
   will-change: clip-path, transform, opacity;
 }
 
-
-@keyframes hold-ring { from { stroke-dashoffset: 126; } to { stroke-dashoffset: 0; } }
