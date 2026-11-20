@@ -195,6 +195,20 @@
   }
 }
 
-@keyframes pos-ripple { from { clip-path: circle(0% at var(--rx, 90%) var(--ry, 8%)); } to { clip-path: circle(150% at var(--rx, 90%) var(--ry, 8%)); } }
-.pos-enter { animation: pos-ripple 650ms cubic-bezier(.3,.7,.2,1) both; }
+@keyframes pos-ripple { 
+  from { clip-path: circle(0% at var(--rx, 75%) var(--ry, 5%)); } 
+  to { clip-path: circle(150% at var(--rx, 75%) var(--ry, 5%)); } 
+}
+.pos-enter { 
+  animation: pos-ripple 550ms cubic-bezier(.25, .8, .25, 1) both; 
+}
+
+@keyframes khata-ripple { 
+  from { clip-path: circle(0% at var(--rx, 25%) var(--ry, 5%)); } 
+  to { clip-path: circle(150% at var(--rx, 25%) var(--ry, 5%)); } 
+}
+.khata-enter { 
+  animation: khata-ripple 550ms cubic-bezier(.25, .8, .25, 1) both; 
+}
+
 @keyframes hold-ring { from { stroke-dashoffset: 126; } to { stroke-dashoffset: 0; } }
