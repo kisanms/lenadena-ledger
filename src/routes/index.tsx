@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AppModeSwitcher } from "@/components/AppModeSwitcher";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus, Search, Settings, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -115,6 +116,8 @@ function Dashboard() {
       onTouchEnd={handleTouchEnd}
     >
       <header className="bg-primary text-primary-foreground px-5 pt-6 pb-20 rounded-b-[2rem]">
+         {/* Flipkart-style top Mode Switcher */}
+        <AppModeSwitcher current="khata" className="mb-4" />
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs opacity-75">{t("greeting_namaste", "Namaste 🙏")}</p>
