@@ -10,12 +10,20 @@ interface AppModeSwitcherProps {
 export function AppModeSwitcher({ current, className }: AppModeSwitcherProps) {
   const navigate = useNavigate();
 
-  const switchMode = (mode: "khata" | "counter") => {
+  const switchMode = (mode: "khata" | "counter", e: React.MouseEvent<HTMLButtonElement>) => {
     if (mode === current) return;
-    // Uses replace: true so the back button doesn't trap you in a history loop
+
+    // Calculate exact tap coordinates for the smooth circular ripple animation
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = Math.round(((rect.left + rect.width / 2) / window.innerWidth) * 100);
+    const y = Math.round(((rect.top + rect.height / 2) / window.innerHeight) * 100);
+
     if (mode === "khata") {
+      sessionStorage.setItem("ld_khata_origin", `${x}%,${y}%`);
+      sessionStorage.setItem("ld_animate_khata", "true");
       navigate({ to: "/", replace: true });
     } else {
+      sessionStorage.setItem("ld_pos_origin", `${x}%,${y}%`);
       navigate({ to: "/counter", replace: true });
     }
   };
@@ -29,9 +37,9 @@ export function AppModeSwitcher({ current, className }: AppModeSwitcherProps) {
       role="tablist"
       aria-label="App mode switcher"
     >
-      {/* Khata Mode Tab */}
+      {/* LenaDena Khata Tab */}
       <button
-        onClick={() => switchMode("khata")}
+        onClick={(e) => switchMode("khata", e)}
         role="tab"
         aria-selected={current === "khata"}
         className={cn(
@@ -62,9 +70,9 @@ export function AppModeSwitcher({ current, className }: AppModeSwitcherProps) {
         </div>
       </button>
 
-      {/* Counter Pay Mode Tab */}
+      {/* LenaDena POS Tab */}
       <button
-        onClick={() => switchMode("counter")}
+        onClick={(e) => switchMode("counter", e)}
         role="tab"
         aria-selected={current === "counter"}
         className={cn(
@@ -84,15 +92,7 @@ export function AppModeSwitcher({ current, className }: AppModeSwitcherProps) {
         </div>
         <div className="flex flex-col items-start text-left leading-none">
           <div className="flex items-center gap-1">
-            <span className="text-[13px] tracking-tight">Counter Pay</span>
-            <span
-              className={cn(
-                "px-1 py-0.2 rounded text-[8px] font-black uppercase tracking-wider",
-                current === "counter" ? "bg-blue-100 text-blue-700" : "bg-blue-500/30 text-blue-200",
-              )}
-            >
-              POS
-            </span>
+            <span className="text-[13px] tracking-tight">LenaDena POS</span>
           </div>
           <span
             className={cn(
@@ -100,7 +100,7 @@ export function AppModeSwitcher({ current, className }: AppModeSwitcherProps) {
               current === "counter" ? "text-blue-700/80" : "text-white/60",
             )}
           >
-            Soundbox QR
+            Instant QR
           </span>
         </div>
       </button>
