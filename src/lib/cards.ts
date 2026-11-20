@@ -102,7 +102,7 @@ export async function renderPosCard(o: { store: string; upiId: string; amount: n
   g.addColorStop(0, "#0038ff"); g.addColorStop(1, "#0a1931");
   x.fillStyle = g; x.fillRect(0, 0, W, H);
   x.textAlign = "center"; x.fillStyle = "#ffffff";
-  x.font = "600 24px sans-serif"; x.fillText("LENADENA COUNTER PAY", W / 2, 80);
+ x.font = "600 24px sans-serif"; x.fillText("LENADENA POS", W / 2, 80);
   x.font = "800 48px sans-serif"; x.fillText(o.store.slice(0, 24), W / 2, 150);
   x.font = "26px monospace"; x.fillStyle = "#c7d2fe"; x.fillText(o.upiId, W / 2, 195);
   x.fillStyle = "#ffffff"; rr(x, 60, 240, W - 120, 760, 32); x.fill();
