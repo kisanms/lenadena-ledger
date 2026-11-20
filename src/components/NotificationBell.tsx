@@ -14,7 +14,7 @@ function ding() {
     const ctx = new AudioContext();
     [880, 1320].forEach((f, i) => {
       const o = ctx.createOscillator();
-      const g = ctx.gain = ctx.createGain();
+      const g = ctx.createGain();
       o.frequency.value = f;
       const t = ctx.currentTime + i * 0.15;
       g.gain.setValueAtTime(0.25, t);
