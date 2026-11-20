@@ -11,10 +11,10 @@ import { AppModeSwitcher } from "@/components/AppModeSwitcher";
 export const Route = createFileRoute("/counter")({
   head: () => ({
     meta: [
-      { title: "LenaDena Counter Pay — UPI QR at your counter" },
-      { name: "description", content: "Enter an amount and show a live UPI QR to collect payment at the shop counter." },
-      { property: "og:title", content: "LenaDena Counter Pay" },
-      { property: "og:description", content: "Soundbox-style UPI QR payment screen for shop counters." },
+      { title: "LenaDena POS — Instant UPI QR at your counter" },
+      { name: "description", content: "Enter an amount and show an instant UPI QR to collect payment at your shop counter." },
+      { property: "og:title", content: "LenaDena POS" },
+      { property: "og:description", content: "Instant UPI QR payment screen for shop counters." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -30,11 +30,17 @@ function CounterPay() {
   const { data: profile } = useProfile(session?.user.id);
   const navigate = useNavigate();
 
-  // "dial" = entering amount on modern POS keypad | "qr" = verified QR card displayed
+  // "dial" = POS keypad amount entry | "qr" = verified QR card displayed
   const [step, setStep] = useState<"dial" | "qr">("dial");
   const [amt, setAmt] = useState("");
   const [qr, setQr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [origin, setOrigin] = useState<string[]>(["75%", "5%"]);
+
+  useEffect(() => {
+    const o = sessionStorage.getItem("ld_pos_origin");
+    if (o) setOrigin(o.split(","));
+  }, []);
 
   const upi = ((profile as Record<string, unknown> | undefined)?.["upi_id"] as string | undefined)?.trim() || "";
   const store = profile?.business_name || profile?.owner_name || "My Shop";
@@ -46,7 +52,6 @@ function CounterPay() {
     [valid, upi, store, amount],
   );
 
-  // Generate QR only on the "qr" step to prevent premature/accidental scanning
   useEffect(() => {
     if (step !== "qr" || !uri) return;
     let live = true;
@@ -80,7 +85,7 @@ function CounterPay() {
     setBusy(true);
     try {
       const blob = await renderPosCard({ store, upiId: upi, amount, uri });
-      const name = `LenaDena-CounterPay-${amount || "open"}.png`;
+      const name = `LenaDena-POS-${amount || "open"}.png`;
       if (mode === "share") {
         const file = new File([blob], name, { type: "image/png" });
         if (navigator.canShare?.({ files: [file] })) {
@@ -110,16 +115,19 @@ function CounterPay() {
   };
 
   return (
-    <div className="pos-enter min-h-dvh bg-gradient-to-b from-pos to-pos-deep text-pos-foreground select-none">
+    <div
+      className="pos-enter min-h-dvh bg-gradient-to-b from-pos to-pos-deep text-pos-foreground select-none"
+      style={{ ["--rx" as string]: origin[0], ["--ry" as string]: origin[1] }}
+    >
       <div className="max-w-md mx-auto px-4 pt-4 pb-8 flex flex-col min-h-dvh justify-between">
         <div>
-          {/* Top Flipkart-style Mode Switcher */}
+          {/* Top Switcher */}
           <AppModeSwitcher current="counter" className="mb-4" />
 
           {/* Shop Header */}
           <header className="flex items-center justify-between mb-4 px-1">
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] uppercase tracking-widest opacity-75 font-semibold">Shop Counter Terminal</p>
+              <p className="text-[11px] uppercase tracking-widest opacity-75 font-semibold">LenaDena POS</p>
               <h1 className="text-xl font-bold truncate leading-tight">{store}</h1>
             </div>
             {valid && (
