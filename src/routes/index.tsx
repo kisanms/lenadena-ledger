@@ -29,6 +29,18 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
+  const [animateKhata, setAnimateKhata] = useState(false);
+  const [khataOrigin, setKhataOrigin] = useState(["25%", "5%"]);
+
+  useEffect(() => {
+    if (sessionStorage.getItem("ld_animate_khata") === "true") {
+      setAnimateKhata(true);
+      sessionStorage.removeItem("ld_animate_khata");
+      const o = sessionStorage.getItem("ld_khata_origin");
+      if (o) setKhataOrigin(o.split(","));
+    }
+  }, []);
+
 function Dashboard() {
   const { session } = useAuth();
   const { t, lang } = useI18n();
@@ -111,7 +123,11 @@ function Dashboard() {
 
   return (
     <div
-      className="min-h-dvh max-w-md mx-auto pb-28 touch-pan-y"
+      className={cn(
+        "min-h-dvh max-w-md mx-auto pb-28 touch-pan-y",
+        animateKhata && "khata-enter"
+      )}
+      style={animateKhata ? { ["--rx" as string]: khataOrigin[0], ["--ry" as string]: khataOrigin[1] } : undefined}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
