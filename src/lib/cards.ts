@@ -93,6 +93,31 @@ export async function renderBillSlip(o: {
   return toBlob(c);
 }
 
+export async function renderPosCard(o: { store: string; upiId: string; amount: number; uri: string }) {
+  const H = 1180;
+  const c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  const x = c.getContext("2d")!;
+  const g = x.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#0038ff"); g.addColorStop(1, "#0a1931");
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.textAlign = "center"; x.fillStyle = "#ffffff";
+  x.font = "600 24px sans-serif"; x.fillText("LENADENA COUNTER PAY", W / 2, 80);
+  x.font = "800 48px sans-serif"; x.fillText(o.store.slice(0, 24), W / 2, 150);
+  x.font = "26px monospace"; x.fillStyle = "#c7d2fe"; x.fillText(o.upiId, W / 2, 195);
+  x.fillStyle = "#ffffff"; rr(x, 60, 240, W - 120, 760, 32); x.fill();
+  x.fillStyle = "#6b7280"; x.font = "600 24px sans-serif";
+  x.fillText(o.amount > 0 ? "AMOUNT TO PAY" : "SCAN & PAY ANY AMOUNT", W / 2, 300);
+  if (o.amount > 0) { x.fillStyle = "#0038ff"; x.font = "800 80px sans-serif"; x.fillText(money(o.amount), W / 2, 390); }
+  const qr = await loadImg(await generateUpiQr(o.uri, 480));
+  x.drawImage(qr, (W - 480) / 2, o.amount > 0 ? 420 : 340, 480, 480);
+  x.fillStyle = "#374151"; x.font = "22px sans-serif"; x.fillText("GPay · PhonePe · Paytm · BHIM · any UPI app", W / 2, 960);
+  x.fillStyle = "#c7d2fe"; x.font = "22px sans-serif";
+  x.fillText(new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }), W / 2, 1070);
+  x.fillText("via LenaDena", W / 2, 1110);
+  return toBlob(c);
+}
+
 export function smsLink(phone: string | null | undefined, body: string) {
   const n = (phone ?? "").replace(/[^\d+]/g, "");
   const sep = /iPhone|iPad|iPod/i.test(navigator.userAgent) ? "&" : "?";

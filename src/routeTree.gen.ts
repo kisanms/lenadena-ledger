@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as ApkRouteImport } from './routes/apk'
+import { Route as CounterRouteImport } from './routes/counter'
 import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PayRouteImport } from './routes/pay'
@@ -33,6 +34,11 @@ const AboutRoute = AboutRouteImport.update({
 const ApkRoute = ApkRouteImport.update({
   id: '/apk',
   path: '/apk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CounterRoute = CounterRouteImport.update({
+  id: '/counter',
+  path: '/counter',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DeleteAccountRoute = DeleteAccountRouteImport.update({
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/apk': typeof ApkRoute
+  '/counter': typeof CounterRoute
   '/delete-account': typeof DeleteAccountRoute
   '/login': typeof LoginRoute
   '/pay': typeof PayRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/apk': typeof ApkRoute
+  '/counter': typeof CounterRoute
   '/delete-account': typeof DeleteAccountRoute
   '/login': typeof LoginRoute
   '/pay': typeof PayRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/apk': typeof ApkRoute
+  '/counter': typeof CounterRoute
   '/delete-account': typeof DeleteAccountRoute
   '/login': typeof LoginRoute
   '/pay': typeof PayRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/apk'
+    | '/counter'
     | '/delete-account'
     | '/login'
     | '/pay'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/apk'
+    | '/counter'
     | '/delete-account'
     | '/login'
     | '/pay'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/apk'
+    | '/counter'
     | '/delete-account'
     | '/login'
     | '/pay'
@@ -151,6 +163,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   ApkRoute: typeof ApkRoute
+  CounterRoute: typeof CounterRoute
   DeleteAccountRoute: typeof DeleteAccountRoute
   LoginRoute: typeof LoginRoute
   PayRoute: typeof PayRoute
@@ -181,6 +194,13 @@ declare module '@tanstack/react-router' {
       path: '/apk'
       fullPath: '/apk'
       preLoaderRoute: typeof ApkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/counter': {
+      id: '/counter'
+      path: '/counter'
+      fullPath: '/counter'
+      preLoaderRoute: typeof CounterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/delete-account': {
@@ -239,6 +259,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   ApkRoute: ApkRoute,
+  CounterRoute: CounterRoute,
   DeleteAccountRoute: DeleteAccountRoute,
   LoginRoute: LoginRoute,
   PayRoute: PayRoute,

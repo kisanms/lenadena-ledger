@@ -19,6 +19,8 @@ import {
 import { PinDots, PinPad } from "@/components/PinPad";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { UpiLockDialog } from "@/components/UpiLockDialog";
+import { Lock } from "lucide-react";
 import { RecoveryPinRow } from "@/components/RecoveryPinRow";
 import { InstallBanner } from "@/components/InstallBanner";
 import { useProfile } from "@/lib/ledger";
@@ -60,6 +62,9 @@ function SettingsPage() {
   const [phone, setPhone] = useState("");
   const [upiId, setUpiId] = useState("");
   const [pinOn, setPinOn] = useState(false);
+  const [upiUnlocked, setUpiUnlocked] = useState(false);
+  const [upiLockOpen, setUpiLockOpen] = useState(false);
+  const [savedUpi, setSavedUpi] = useState("");
   const [pinSheet, setPinSheet] = useState(false);
   const [langSheet, setLangSheet] = useState(false);
 
@@ -72,6 +77,8 @@ function SettingsPage() {
       setBiz(profile.business_name ?? "");
       setOwner(profile.owner_name ?? "");
       setPhone(profile.phone ?? "");
+      const su = (profile as Record<string, any> | undefined)?.["upi_id"] ?? "";
+      setSavedUpi(su);
       setUpiId(
         (profile as Record<string, any> | undefined)?.["upi_id"] ??
         (typeof window !== "undefined" ? localStorage.getItem("lenadena_upi_id") ?? "" : "")
@@ -84,7 +91,8 @@ function SettingsPage() {
   const activeLangObj = languages.find((l) => l.code === lang) || languages[0]!;
 
   const saveProfile = async () => {
-    const cleanUpi = upiId.trim();
+    // UPI ID can only change after PIN/password verification.
+    const cleanUpi = (upiUnlocked || !savedUpi ? upiId : savedUpi).trim();
     if (typeof window !== "undefined") {
       localStorage.setItem("lenadena_upi_id", cleanUpi);
     }
@@ -110,6 +118,7 @@ function SettingsPage() {
 
     qc.invalidateQueries({ queryKey: ["profile", uid] });
     toast.success(t("save_profile"));
+    setSavedUpi(cleanUpi); setUpiUnlocked(false);
   };
 
   const handleShareApp = async () => {
@@ -234,13 +243,24 @@ function SettingsPage() {
             <Label htmlFor="upi">UPI ID (for payments & QR code)</Label>
             <span className="text-[10px] text-muted-foreground font-mono">GPay · PhonePe · Paytm</span>
           </div>
-          <Input
-            id="upi"
-            className="h-12 font-mono text-sm"
-            value={upiId}
-            onChange={(e) => setUpiId(e.target.value)}
-            placeholder="e.g. 9876543210@paytm or shop@okaxis"
-          />
+          {savedUpi && !upiUnlocked ? (
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-12 rounded-md border bg-muted px-3 flex items-center gap-2 font-mono text-sm">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                {"•".repeat(Math.max(3, savedUpi.split("@")[0]!.length - 2)) + savedUpi.split("@")[0]!.slice(-2) + "@" + (savedUpi.split("@")[1] ?? "")}
+              </div>
+              <Button type="button" variant="outline" className="h-12" onClick={() => setUpiLockOpen(true)}>Change</Button>
+            </div>
+          ) : (
+            <Input
+              id="upi"
+              className="h-12 font-mono text-sm"
+              value={upiId}
+              onChange={(e) => setUpiId(e.target.value)}
+              placeholder="e.g. 9876543210@paytm or shop@okaxis"
+            />
+          )}
+          <UpiLockDialog open={upiLockOpen} onOpenChange={setUpiLockOpen} uid={uid} email={session?.user.email} onUnlocked={() => setUpiUnlocked(true)} />
           <p className="text-[11px] text-muted-foreground">
             Adds an instant payment QR code on PDF statements and 1-tap pay link on WhatsApp reminders.
           </p>

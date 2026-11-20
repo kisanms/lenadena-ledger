@@ -29,6 +29,9 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-pos: var(--pos);
+  --color-pos-deep: var(--pos-deep);
+  --color-pos-foreground: var(--pos-foreground);
   --color-gain: var(--gain);
   --color-gain-foreground: var(--gain-foreground);
   --color-loss: var(--loss);
@@ -71,6 +74,9 @@
   --accent-foreground: oklch(0.25 0.05 50);
   --destructive: oklch(0.55 0.2 27);
   --destructive-foreground: oklch(0.98 0.01 85);
+  --pos: #0038ff;
+  --pos-deep: #0a1931;
+  --pos-foreground: #ffffff;
   --gain: oklch(0.52 0.14 155);
   --gain-foreground: oklch(0.98 0.01 85);
   --loss: oklch(0.55 0.19 30);
@@ -188,3 +194,7 @@
     font-family: var(--font-display);
   }
 }
+
+@keyframes pos-ripple { from { clip-path: circle(0% at var(--rx, 90%) var(--ry, 8%)); } to { clip-path: circle(150% at var(--rx, 90%) var(--ry, 8%)); } }
+.pos-enter { animation: pos-ripple 650ms cubic-bezier(.3,.7,.2,1) both; }
+@keyframes hold-ring { from { stroke-dashoffset: 126; } to { stroke-dashoffset: 0; } }
