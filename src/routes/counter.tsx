@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, BadgeCheck, Delete, Download, Share2, RotateCcw, QrCode, Sparkles } from "lucide-react";
+import { BadgeCheck, Delete, Download, Share2, RotateCcw, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { useProfile } from "@/lib/ledger";
 import { buildUpiUri, generateUpiQr, isValidUpiId } from "@/lib/upi";
 import { deliverImage, renderPosCard } from "@/lib/cards";
+import { AppModeSwitcher } from "@/components/AppModeSwitcher";
 
 export const Route = createFileRoute("/counter")({
   head: () => ({
@@ -29,17 +30,11 @@ function CounterPay() {
   const { data: profile } = useProfile(session?.user.id);
   const navigate = useNavigate();
 
-  // "dial" = entering amount on POS keypad | "qr" = verified QR card displayed
+  // "dial" = entering amount on modern POS keypad | "qr" = verified QR card displayed
   const [step, setStep] = useState<"dial" | "qr">("dial");
   const [amt, setAmt] = useState("");
   const [qr, setQr] = useState("");
   const [busy, setBusy] = useState(false);
-  const [origin, setOrigin] = useState<string[]>(["90%", "8%"]);
-
-  useEffect(() => {
-    const o = sessionStorage.getItem("ld_pos_origin");
-    if (o) setOrigin(o.split(","));
-  }, []);
 
   const upi = ((profile as Record<string, unknown> | undefined)?.["upi_id"] as string | undefined)?.trim() || "";
   const store = profile?.business_name || profile?.owner_name || "My Shop";
@@ -51,7 +46,7 @@ function CounterPay() {
     [valid, upi, store, amount],
   );
 
-  // Generate QR only when entering the "qr" step or when amount changes while in "qr"
+  // Generate QR only on the "qr" step to prevent premature/accidental scanning
   useEffect(() => {
     if (step !== "qr" || !uri) return;
     let live = true;
@@ -62,19 +57,6 @@ function CounterPay() {
       live = false;
     };
   }, [step, uri]);
-
-  // Clean navigation back: avoids loop in browser/Android back stack
-  const handleBack = () => {
-    if (step === "qr") {
-      setStep("dial");
-      return;
-    }
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      navigate({ to: "/", replace: true });
-    }
-  };
 
   const press = (k: string) => setAmt((a) => (a + k).replace(/^0+/, "").slice(0, 6));
   const addChip = (n: number) => setAmt(String(Math.min(amount + n, 1_00_000)));
@@ -128,42 +110,32 @@ function CounterPay() {
   };
 
   return (
-    <div
-      className="pos-enter min-h-dvh bg-gradient-to-b from-pos to-pos-deep text-pos-foreground select-none"
-      style={{ ["--rx" as string]: origin[0], ["--ry" as string]: origin[1] }}
-    >
-      <div className="max-w-md mx-auto px-5 pt-4 pb-8 flex flex-col min-h-dvh justify-between">
-        {/* Header */}
+    <div className="pos-enter min-h-dvh bg-gradient-to-b from-pos to-pos-deep text-pos-foreground select-none">
+      <div className="max-w-md mx-auto px-4 pt-4 pb-8 flex flex-col min-h-dvh justify-between">
         <div>
-          <header className="flex items-center gap-3 mb-4">
-            <button
-              onClick={handleBack}
-              aria-label="Back"
-              className="grid place-items-center h-10 w-10 rounded-full bg-pos-foreground/15 active:bg-pos-foreground/25 active:scale-95 transition"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
+          {/* Top Flipkart-style Mode Switcher */}
+          <AppModeSwitcher current="counter" className="mb-4" />
+
+          {/* Shop Header */}
+          <header className="flex items-center justify-between mb-4 px-1">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-bold tracking-widest uppercase opacity-75">Counter Pay</span>
-                <span className="rounded bg-pos-foreground/20 px-1.5 py-0.2 text-[9px] font-semibold">BETA</span>
-              </div>
-              <h1 className="text-base font-bold truncate leading-tight">{store}</h1>
+              <p className="text-[11px] uppercase tracking-widest opacity-75 font-semibold">Shop Counter Terminal</p>
+              <h1 className="text-xl font-bold truncate leading-tight">{store}</h1>
             </div>
             {valid && (
-              <span className="flex items-center gap-1 rounded-full bg-pos-foreground/15 px-2.5 py-1 text-[11px] font-semibold">
-                <BadgeCheck className="h-3.5 w-3.5" /> UPI
+              <span className="flex items-center gap-1 rounded-full bg-pos-foreground/15 px-3 py-1 text-xs font-semibold">
+                <BadgeCheck className="h-4 w-4 text-emerald-300" /> UPI Active
               </span>
             )}
           </header>
 
           {!valid ? (
-            <div className="rounded-2xl bg-pos-foreground/10 p-6 text-center space-y-3 mt-8">
+            <div className="rounded-2xl bg-pos-foreground/10 p-6 text-center space-y-3 mt-6 border border-white/10">
               <p className="font-semibold text-base">Add your UPI ID to start collecting payments</p>
               <p className="text-xs opacity-75">Customer payments will go directly to your linked bank account.</p>
               <Link
                 to="/settings"
-                className="inline-block rounded-xl bg-pos-foreground text-pos px-5 py-2.5 font-bold text-sm"
+                className="inline-block rounded-xl bg-pos-foreground text-pos px-5 py-2.5 font-bold text-sm shadow-md"
               >
                 Open Settings
               </Link>
@@ -171,8 +143,8 @@ function CounterPay() {
           ) : step === "dial" ? (
             /* ================= STEP 1: MODERN POS DIALER ================= */
             <div className="flex flex-col gap-3">
-              {/* Amount Display Board */}
-              <div className="rounded-2xl bg-pos-foreground/10 border border-pos-foreground/15 p-4 text-center">
+              {/* Amount Display */}
+              <div className="rounded-2xl bg-pos-foreground/10 border border-pos-foreground/15 p-4 text-center shadow-inner">
                 <p className="text-[11px] font-bold uppercase tracking-wider opacity-70">Enter Bill Amount</p>
                 <div className="flex items-baseline justify-center gap-1 my-2">
                   <span className="text-2xl font-bold opacity-60">₹</span>
@@ -189,7 +161,7 @@ function CounterPay() {
                   <button
                     key={c}
                     onClick={() => addChip(c)}
-                    className="rounded-xl bg-pos-foreground/15 py-2 text-xs font-bold active:bg-pos-foreground/30 active:scale-95 transition"
+                    className="rounded-xl bg-pos-foreground/15 py-2.5 text-xs font-bold active:bg-pos-foreground/30 active:scale-95 transition"
                   >
                     +{fmt(c)}
                   </button>
@@ -243,7 +215,7 @@ function CounterPay() {
                 </p>
 
                 {/* QR Code Container */}
-                <div className="bg-white p-2.5 rounded-2xl shadow-inner border border-gray-100 flex items-center justify-center">
+                <div className="bg-white p-3 rounded-2xl shadow-inner border border-gray-100 flex items-center justify-center">
                   {qr ? (
                     <img src={qr} alt="UPI payment QR" className="w-60 h-60 object-contain" />
                   ) : (
@@ -253,7 +225,7 @@ function CounterPay() {
                   )}
                 </div>
 
-                <div className="w-full mt-3 pt-2 border-t border-pos/15 flex items-center justify-between text-xs">
+                <div className="w-full mt-3 pt-2.5 border-t border-pos/15 flex items-center justify-between text-xs">
                   <span className="font-semibold text-pos truncate max-w-[170px]">{store}</span>
                   <span className="font-mono text-[11px] opacity-75 truncate max-w-[140px]">{upi}</span>
                 </div>
@@ -265,7 +237,7 @@ function CounterPay() {
                   onClick={handleNewBill}
                   className="flex flex-col items-center gap-1 rounded-xl bg-pos-foreground/15 py-2.5 text-xs font-semibold active:bg-pos-foreground/25 active:scale-95 transition"
                 >
-                  <RotateCcw className="h-4 w-4" /> New Bill
+                  <RotateCcw className="h-4 w-4" /> Edit / New
                 </button>
                 <button
                   disabled={busy}
