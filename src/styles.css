@@ -184,56 +184,66 @@
   * {
     border-color: var(--color-border);
   }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
   }
-  h1, h2, h3, .font-display {
+
+  h1,
+  h2,
+  h3,
+  .font-display {
     font-family: var(--font-display);
   }
 }
 
-@keyframes pos-ripple { 
-  0% { 
-    clip-path: circle(0% at var(--rx, 75%) var(--ry, 5%)); 
+/* @keyframes pos-ripple {
+  0% {
+    clip-path: circle(0% at var(--rx, 75%) var(--ry, 5%));
     opacity: 0.55;
-    transform: scale(0.985);
+    transform: scale(0.999);
   }
-  35% {
+
+  60% {
     opacity: 1;
   }
-  100% { 
-    clip-path: circle(160% at var(--rx, 75%) var(--ry, 5%)); 
+
+  100% {
+    clip-path: circle(160% at var(--rx, 75%) var(--ry, 5%));
     opacity: 1;
     transform: scale(1);
-  } 
+  }
 }
-.pos-enter { 
-  animation: pos-ripple 750ms cubic-bezier(0.16, 1, 0.3, 1) both; 
+
+.pos-enter {
+  animation: pos-ripple 750ms cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-origin: var(--rx, 75%) var(--ry, 5%);
   will-change: clip-path, transform, opacity;
 }
 
-@keyframes khata-ripple { 
-  0% { 
-    clip-path: circle(0% at var(--rx, 25%) var(--ry, 5%)); 
+@keyframes khata-ripple {
+  0% {
+    clip-path: circle(0% at var(--rx, 25%) var(--ry, 5%));
     opacity: 0.55;
     transform: scale(0.985);
-  } 
+  }
+
   35% {
     opacity: 1;
   }
-  100% { 
-    clip-path: circle(160% at var(--rx, 25%) var(--ry, 5%)); 
+
+  100% {
+    clip-path: circle(160% at var(--rx, 25%) var(--ry, 5%));
     opacity: 1;
     transform: scale(1);
-  } 
-}
-.khata-enter { 
-  animation: khata-ripple 750ms cubic-bezier(0.16, 1, 0.3, 1) both; 
-  transform-origin: var(--rx, 25%) var(--ry, 5%);
-  will-change: clip-path, transform, opacity;
+  }
 }
 
+.khata-enter {
+  animation: khata-ripple 750ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: var(--rx, 25%) var(--ry, 5%);
+  will-change: clip-path, transform, opacity;
+} */
