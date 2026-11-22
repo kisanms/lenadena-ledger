@@ -196,77 +196,53 @@ function Dashboard() {
       <div className="px-4 mt-5">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={tab === "customer" ? t("search_customer") : t("search_supplier")}
-            className="pl-9 h-11 bg-card rounded-xl"
-          />
+          <Input className="h-12 pl-9 bg-card" placeholder={t("search_placeholder")} value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
       </div>
 
-      <div className="px-4 mt-4 space-y-2">
-        {isLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-18 rounded-2xl" />
-          ))
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12 px-4 text-muted-foreground">
-            <p className="font-medium">
-              {q ? t("no_results_found", "No matching party found") : tab === "customer" ? t("no_customers_yet") : t("no_suppliers_yet")}
-            </p>
-            <p className="text-xs mt-1 opacity-75">
-              {q ? t("try_searching_again", "Try searching with a different name or number") : t("add_first_party_hint", "Tap '+ Add' below to start tracking")}
-            </p>
-          </div>
-        ) : (
-          filtered.map((p) => {
-            const due = dues?.[p.id];
-            return (
-              <Link
-                key={p.id}
-                to="/party/$id"
-                params={{ id: p.id }}
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-card border shadow-xs hover:border-primary/40 transition active:scale-[0.99]"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-11 w-11 rounded-full bg-primary/10 text-primary font-bold grid place-items-center shrink-0 text-sm">
-                    {initials(p.name)}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-foreground truncate">{p.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{formatPhone(p.phone) || t("no_phone")}</p>
-                  </div>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className={cn("font-bold tabular-nums text-base", p.balance > 0 ? "text-gain" : p.balance < 0 ? "text-loss" : "text-muted-foreground")}>
-                    {inr(Math.abs(p.balance))}
-                  </p>
-                  <p className="text-[11px] font-medium text-muted-foreground">{balanceText(p.balance, t)}</p>
-                  {due && <div className="mt-0.5 flex justify-end"><DueBadge due={due} /></div>}
-                </div>
-              </Link>
-            );
-          })
+      <ul className="mt-3 px-2">
+        {isLoading &&
+          [0, 1, 2].map((i) => <Skeleton key={i} className="h-16 m-2 rounded-xl" />)}
+        {!isLoading && list.length === 0 && (
+          <li className="text-center py-16 px-6 text-muted-foreground">
+            <p className="font-display text-lg text-foreground">{tab === "customer" ? t("no_customers_yet") : t("no_suppliers_yet")}</p>
+            <p className="text-sm mt-1">{t("add_first_party_hint")}</p>
+          </li>
         )}
-      </div>
+        {list.map((p) => (
+          <li key={p.id}>
+            <Link
+              to="/party/$id"
+              params={{ id: p.id }}
+              className="flex items-center gap-3 rounded-xl px-3 py-3 active:bg-secondary"
+            >
+              <span className="grid place-items-center h-11 w-11 rounded-full bg-secondary text-secondary-foreground font-semibold">
+                {initials(p.name)}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold truncate">{p.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {p.phone ? `${formatPhone(p.phone)} · ` : ""}{fmtDate(p.last_activity)}
+                </p>
+                {!p.shared && <DueBadge due={dues?.[p.id]} balance={p.balance} className="mt-1" />}
+              </div>
+              <div className="text-right">
+                <p className={cn("font-bold", p.balance > 0 ? "text-gain" : p.balance < 0 ? "text-loss" : "text-muted-foreground")}>
+                  {inr(p.balance)}
+                </p>
+                <p className="text-[11px] text-muted-foreground">{balanceText(p.balance, lang)}</p>
+              </div>
+            </Link>
+          </li>
+        ))}
+      </ul>
 
-      <div className="fixed bottom-6 left-0 right-0 max-w-md mx-auto px-4 pointer-events-none">
-        <Button
-          onClick={() => setAdding(true)}
-          className="w-full h-13 rounded-2xl shadow-xl font-bold text-base gap-2 pointer-events-auto"
-          size="lg"
-        >
-          <Plus className="h-5 w-5" />
-          {tab === "customer" ? t("add_customer") : t("add_supplier")}
+      <div className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] inset-x-0 flex justify-center pointer-events-none">
+        <Button className="pointer-events-auto h-14 px-6 rounded-full shadow-xl bg-accent text-accent-foreground hover:bg-accent/90 text-base" onClick={() => setAdding(true)}>
+          <Plus className="mr-1 h-5 w-5" /> {tab === "customer" ? t("add_customer") : t("add_supplier")}
         </Button>
       </div>
-
-      <AddPartyDialog
-        open={adding}
-        onOpenChange={setAdding}
-        defaultKind={tab}
-      />
+      <AddPartyDialog open={adding} onOpenChange={setAdding} kind={tab} />
     </div>
   );
 }
