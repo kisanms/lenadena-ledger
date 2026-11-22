@@ -23,8 +23,8 @@ describe("PayPage Component", () => {
 
   expect(screen.getByText("Pay directly using UPI")).toBeInTheDocument();
     expect(screen.getByText("Kisan Kirana")).toBeInTheDocument();
-    expect(screen.getByText("majumdarkishan46-1@okicici")).toBeInTheDocument();
-    expect(screen.getByText("₹500.00")).toBeInTheDocument();
+    expect(screen.getAllByText("majumdarkishan46-1@okicici").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("₹500.00").length).toBeGreaterThan(0);
     expect(screen.getByText(/Monthly Ration/)).toBeInTheDocument();
 
     // QR image should be rendered once generated
