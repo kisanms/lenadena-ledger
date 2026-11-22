@@ -203,13 +203,13 @@ function Dashboard() {
       <ul className="mt-3 px-2">
         {isLoading &&
           [0, 1, 2].map((i) => <Skeleton key={i} className="h-16 m-2 rounded-xl" />)}
-        {!isLoading && list.length === 0 && (
+        {!isLoading && filtered.length === 0 && (
           <li className="text-center py-16 px-6 text-muted-foreground">
             <p className="font-display text-lg text-foreground">{tab === "customer" ? t("no_customers_yet") : t("no_suppliers_yet")}</p>
             <p className="text-sm mt-1">{t("add_first_party_hint")}</p>
           </li>
         )}
-        {list.map((p) => (
+        {filtered.map((p) => (
           <li key={p.id}>
             <Link
               to="/party/$id"
