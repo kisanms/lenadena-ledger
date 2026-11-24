@@ -557,7 +557,7 @@ export const translations = {
   cs_whatsapp: { en: "WhatsApp", hi: "WhatsApp", hinglish: "WhatsApp", gu: "WhatsApp", mr: "WhatsApp" },
   cs_bill_slip: { en: "Bill slip", hi: "बिल स्लिप", hinglish: "Bill slip", gu: "બિલ સ્લિપ", mr: "बिल स्लिप" },
   cs_pay_qr: { en: "Payment QR", hi: "पेमेंट QR", hinglish: "Payment QR", gu: "પેમેન્ટ QR", mr: "पेमेंट QR" },
-  cs_save_card: { en: "Save card to gallery", hi: "कार्ड गैलरी में सेव करें", hinglish: "Card gallery me save karein", gu: "કાર્ડ ગેલેરીમાં સેવ કરો", mr: "कार्ड गॅलरीत सेव्ह करा" },
+  cs_save_card: { en: "Save card", hi: "कार्ड सेव करें", hinglish: "Card save karein", gu: "કાર્ડ સેવ કરો", mr: "कार्ड सेव्ह करा" },
   cs_share_card: { en: "Share card", hi: "कार्ड शेयर करें", hinglish: "Card share karein", gu: "કાર્ડ શેર કરો", mr: "कार्ड शेअर करा" },
   cs_no_upi: { en: "Add your UPI ID in Settings to show a payment QR.", hi: "QR दिखाने के लिए सेटिंग्स में UPI ID जोड़ें।", hinglish: "QR ke liye Settings me UPI ID daalein.", gu: "QR માટે સેટિંગ્સમાં UPI ID ઉમેરો.", mr: "QR साठी सेटिंग्जमध्ये UPI ID जोडा." },
   cs_amount_due: { en: "Amount due", hi: "बकाया राशि", hinglish: "Baaki rakam", gu: "બાકી રકમ", mr: "बाकी रक्कम" },
