@@ -216,6 +216,7 @@ export function NotificationBell() {
                           <Link
                             to="/party/$id"
                             params={{ id: i.party_id }}
+                            search={{ entry: i.id }}
                             onClick={() => setOpen(false)}
                             className={cn(
                               "flex items-center gap-3 px-4 py-3 border-b hover:bg-muted/60 active:scale-[0.98] transition",

@@ -27,12 +27,18 @@ import { EntryDetailSheet, BubblePhoto } from "@/components/EntryDetailSheet";
 import { buildUpiUri, generateUpiQr, isValidUpiId } from "@/lib/upi";
 
 export const Route = createFileRoute("/party/$id")({
+  validateSearch: (search: Record<string, unknown>): { entry?: string } => {
+    const entry = search["entry"];
+    return typeof entry === "string" ? { entry } : {};
+  },
   head: () => ({
     meta: [
       { title: "Passbook — LenaDena" },
       { name: "description", content: "Full transaction history and running balance." },
       { property: "og:title", content: "Passbook — LenaDena" },
       { property: "og:description", content: "Customer and supplier passbook with running balance." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: PartyPage,
@@ -47,6 +53,7 @@ const monthRange = (offset: number): Range => {
 
 function PartyPage() {
   const { id } = Route.useParams();
+  const { entry: notifiedEntryId } = Route.useSearch();
   const { session } = useAuth();
   const { t } = useI18n();
   const { data: profile } = useProfile(session?.user.id);
@@ -62,15 +69,17 @@ function PartyPage() {
   const [range, setRange] = useState<Range>({});
   const [imageToView, setImageToView] = useState<string | null>(null);
   const qc = useQueryClient();
-  const navigate = useNavigate();
+  const navigate = useNavigate({ from: Route.fullPath });
   const [editEntry, setEditEntry] = useState<Entry | null>(null);
   const [editParty, setEditParty] = useState(false);
   const [pf, setPf] = useState({ name: "", phone: "", email: "", note: "" });
   const [detail, setDetail] = useState<(Entry & { running: number }) | null>(null);
   const [filter, setFilter] = useState<"all" | "this" | "last">("all");
+  const [highlightedEntryId, setHighlightedEntryId] = useState<string | null>(null);
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
+  const notificationTargetRef = useRef<string | null>(null);
 
   // If this is a shared ledger, also load the owner's profile (the supplier) so the customer can get their UPI ID
   const { data: ownerProfile } = useProfile(party?.shared ? party.user_id : undefined);
@@ -108,8 +117,45 @@ function PartyPage() {
     }
   };
 
+  // Open the exact transaction linked from a notification before applying normal newest-entry scrolling.
+  useEffect(() => {
+    if (!notifiedEntryId || !entries) return;
+    const target = rows.find((entry) => entry.id === notifiedEntryId);
+    if (!target) return;
+
+    notificationTargetRef.current = target.id;
+    setFilter("all");
+    setDetail(target);
+    setHighlightedEntryId(target.id);
+    void navigate({
+      to: ".",
+      search: (prev) => {
+        const next = { ...prev };
+        delete next.entry;
+        return next;
+      },
+      replace: true,
+    });
+  }, [entries, navigate, notifiedEntryId, rows]);
+
+  useEffect(() => {
+    if (!highlightedEntryId) return undefined;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(`entry-${highlightedEntryId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    const timeout = window.setTimeout(() => {
+      setHighlightedEntryId(null);
+      notificationTargetRef.current = null;
+    }, 2600);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+    };
+  }, [highlightedEntryId]);
+
   // Triggers when page finishes loading, when entries arrive, or when filters change
   useEffect(() => {
+    if (notificationTargetRef.current) return undefined;
     if (!isLoading && entries && entries.length > 0) {
       // 1. Immediate scroll
       scrollToBottom("auto");
@@ -351,9 +397,11 @@ function PartyPage() {
               return (
                 <div key={e.id} className={cn("flex flex-col", isCredit ? "items-start" : "items-end")}>
                   <button
+                    id={`entry-${e.id}`}
                     onClick={() => setDetail(e)}
                     className={cn(
                       "w-[76%] rounded-2xl border p-3 text-left shadow-xs transition-transform active:scale-[0.99]",
+                      highlightedEntryId === e.id && "ring-2 ring-primary ring-offset-2 ring-offset-background",
                       isCredit
                         ? "rounded-tl-xs bg-card border-loss/20 hover:border-loss/40"
                         : "rounded-tr-xs bg-gain/10 border-gain/30 hover:border-gain/50"
